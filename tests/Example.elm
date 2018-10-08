@@ -28,23 +28,68 @@ suite =
                             ]
                     in
                     Expect.equal (CRDT.toString crdt) "Hi"
+
+            --, test "constructs a to be resolved string if different users edited the same position" <|
+            --    \_ ->
+            --        let
+            --            crdt =
+            --                [ Insert "bob" [ 0 ] 'H'
+            --                , Insert "bob" [ 7 ] 'i'
+            --                , Insert "alice" [ 0 ] 'H'
+            --                , Insert "alice" [ 7 ] 'o'
+            --                ]
+            --        in
+            --        Expect.equal (CRDT.toString crdt) "Hi"
             , test "constructs the correct string from a list of many operations even if the order is not correct" <|
                 \_ ->
                     let
                         crdt =
-                            [ Insert "andy" [ 0 ] 'H'
-                            , Insert "andy" [ 6 ] 'W'
-                            , Insert "andy" [ 11 ] 'L'
-                            , Insert "andy" [ 10 ] 'R'
-                            , Insert "andy" [ 3 ] 'L'
-                            , Insert "andy" [ 4 ] 'O'
-                            , Insert "andy" [ 2 ] 'L'
-                            , Insert "andy" [ 1 ] 'E'
-                            , Insert "andy" [ 5 ] ' '
-                            , Insert "andy" [ 8 ] 'O'
-                            , Insert "andy" [ 13 ] 'D'
+                            [ Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 6 ] 'W'
+                            , Insert "bob" [ 11 ] 'L'
+                            , Insert "bob" [ 10 ] 'R'
+                            , Insert "bob" [ 3 ] 'L'
+                            , Insert "bob" [ 4 ] 'O'
+                            , Insert "bob" [ 2 ] 'L'
+                            , Insert "bob" [ 1 ] 'E'
+                            , Insert "bob" [ 5 ] ' '
+                            , Insert "bob" [ 8 ] 'O'
+                            , Insert "bob" [ 13 ] 'D'
                             ]
                     in
                     Expect.equal (CRDT.toString crdt) "HELLO WORLD"
+            ]
+        , describe "CRDT.update"
+            [ test "it adds a character in a correct position if the updated version differs by one character" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 7 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "Hel"
+
+                        expectedResult =
+                            [ Insert "bob" [ 8 ] 'l'
+                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 7 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            ]
+        , describe "CRDT.zip"
+            [ test "it combines to list as an outer join" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            CRDT.zip [ 'H', 'E', 'L' ] [ ( 'H', [ 3 ] ), ( 'E', [ 6 ] ) ]
+
+                        expectedResult =
+                            [ ( Just 'H', Just ( 'H', [ 3 ] ) )
+                            , ( Just 'E', Just ( 'E', [ 6 ] ) )
+                            , ( Just 'L', Nothing )
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             ]
         ]
