@@ -7,6 +7,14 @@ type alias CRDT =
     List Operation
 
 
+type alias DiffList =
+    List DiffListEntry
+
+
+type alias DiffListEntry =
+    ( Maybe Char, Maybe ( Char, Path ) )
+
+
 type Operation
     = Insert UserId Path Char
 
@@ -75,51 +83,114 @@ pathFromOperation operation =
 
 update : UserId -> String -> CRDT -> CRDT
 update userId updatedString crdt =
-    let
-        compareList =
-            if String.length updatedString >= List.length (toCharsWithPath crdt) then
-                zip (String.toList updatedString) (toCharsWithPath crdt)
-
-            else
-                reverseZip (toCharsWithPath crdt) (String.toList updatedString)
-    in
-    List.foldr updateOnce crdt compareList
+    zip (String.toList updatedString) (toCharsWithPath crdt) []
+        |> List.foldr updateOnce crdt
 
 
 
 --I can only add things to the list!
 
 
-updateOnce : ( Maybe Char, Maybe ( Char, Path ) ) -> CRDT -> CRDT
-updateOnce listEntry crdt =
-    case listEntry of
+updateOnce : DiffListEntry -> CRDT -> CRDT
+updateOnce diffListEntry crdt =
+    case diffListEntry of
         ( Just updatedChar, Just ( presentChar, path ) ) ->
-            if updatedChar == presentChar then
-                crdt
-
-            else
-                crdt
+            crdt
 
         ( Nothing, Just ( presentChar, path ) ) ->
             --Remove?
             crdt
 
         ( Just updatedChar, Nothing ) ->
-            Insert "bob" (maximumPath crdt) updatedChar :: crdt
+            if endOf String then
+                Insert "bob" (incrementPath (pathAtTheEndOf crdt)) updatedChar :: crdt
+
+            else
+                Insert "bob" (pathBefore path crdt) updatedChar :: crdt
 
         ( Nothing, Nothing ) ->
             crdt
 
 
-maximumPath : CRDT -> Path
-maximumPath crdt =
-    crdt
-        |> List.sortBy pathFromOperation
-        |> List.reverse
-        |> List.head
-        |> Maybe.map pathFromOperation
-        |> Maybe.map (List.map ((+) 1))
-        |> Maybe.withDefault [ crdtRegisterMaximum ]
+crdtUntil supremumPath crdt =
+    List.filter
+        (\operation ->
+            case operation of
+                Insert _ path _ ->
+                    path < supremumPath
+        )
+        crdt
+
+
+pathBefore : Path -> CRDT -> Path
+pathBefore path crdt =
+    let
+        supremumPath =
+            path
+
+        minPath =
+            pathAtTheEndOf (crdtUntil supremumPath crdt)
+    in
+    if isSpaceBetween minPath supremumPath then
+        choosePathBetween minPath supremumPath
+
+    else
+        newSubregister minPath
+
+
+isSpaceBetween minPath supremumPath =
+    case minPath of
+        [ minNumber ] ->
+            case supremumPath of
+                [ supremumNumber ] ->
+                    minNumber + 1 < supremumNumber
+
+                _ ->
+                    False
+
+        _ ->
+            False
+
+
+choosePathBetween minPath supremumPath =
+    List.map ((+) 1) minPath
+
+
+newSubregister minPath =
+    case minPath of
+        [ minNumber ] ->
+            [ minNumber, 0 ]
+
+        _ ->
+            minPath
+
+
+incrementPath : Path -> Path
+incrementPath path =
+    case path of
+        [ number ] ->
+            [ number + 1 ]
+
+        _ ->
+            path
+
+
+pathAtTheEndOf : CRDT -> Path
+pathAtTheEndOf crdt =
+    let
+        maxPath =
+            crdt
+                |> List.sortBy pathFromOperation
+                |> List.reverse
+                |> List.head
+                |> Maybe.map pathFromOperation
+                |> Maybe.withDefault [ crdtRegisterMaximum ]
+    in
+    if maxPath == [ 15 ] then
+        [ 15, 0 ]
+
+    else
+        maxPath
 
 
 crdtRegisterMaximum : Int
@@ -127,22 +198,45 @@ crdtRegisterMaximum =
     15
 
 
-zip : List a -> List b -> List ( Maybe a, Maybe b )
-zip firstList secondList =
-    let
-        firstArray =
-            Array.fromList firstList
+zip : List Char -> List ( Char, Path ) -> DiffList -> DiffList
+zip updatedChars operationResults diffList =
+    case updatedChars of
+        updatedChar :: restUpdatedChars ->
+            case operationResults of
+                [] ->
+                    -- Add to end of crdt
+                    let
+                        newDifflist =
+                            ( Just updatedChar, Nothing ) :: diffList
+                    in
+                    zip restUpdatedChars operationResults newDifflist
 
-        secondArray =
-            Array.fromList secondList
-    in
-    Array.indexedMap
-        (\indexInFirst elementFromFirst -> ( Just elementFromFirst, Array.get indexInFirst secondArray ))
-        firstArray
-        |> Array.toList
+                ( operationResultChar, operationResultPath ) :: restOperations ->
+                    if updatedChar == operationResultChar then
+                        let
+                            newDifflist =
+                                ( Just updatedChar, Just ( operationResultChar, operationResultPath ) ) :: diffList
+                        in
+                        zip restUpdatedChars restOperations newDifflist
+
+                    else
+                        let
+                            newDifflist =
+                                ( Just updatedChar, Nothing ) :: diffList
+                        in
+                        zip restUpdatedChars operationResults newDifflist
+
+        [] ->
+            case operationResults of
+                operationResult :: restOperations ->
+                    --removal
+                    zip updatedChars operationResults diffList
+
+                [] ->
+                    diffList
 
 
-reverseZip : List b -> List a -> List ( Maybe a, Maybe b )
+reverseZip : List ( Char, Path ) -> List Char -> DiffList
 reverseZip secondList firstList =
     let
         firstArray =

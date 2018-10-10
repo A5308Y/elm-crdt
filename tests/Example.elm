@@ -60,7 +60,7 @@ suite =
                     Expect.equal (CRDT.toString crdt) "HELLO WORLD"
             ]
         , describe "CRDT.update"
-            [ test "it adds a character in a correct position if the updated version differs by one character" <|
+            [ test "it adds a character to the end if the updated version differs by one character" <|
                 \_ ->
                     let
                         calculatedResult =
@@ -76,18 +76,121 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
+            , test "it adds two characters to the last position if the updated version differs by two characters" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 7 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "Hell"
+
+                        expectedResult =
+                            [ Insert "bob" [ 9 ] 'l'
+                            , Insert "bob" [ 8 ] 'l'
+                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 7 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "it adds one character to a sub-register if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "Hel"
+
+                        expectedResult =
+                            [ Insert "bob" [ 15, 0 ] 'l'
+                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "it adds one character to a sub-register if there is no space between two characters in the parent register" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'K'
+                            , Insert "bob" [ 1 ] 'n'
+                            ]
+                                |> CRDT.update "bob" "Kan"
+
+                        expectedResult =
+                            [ Insert "bob" [ 0, 0 ] 'a'
+                            , Insert "bob" [ 0 ] 'K'
+                            , Insert "bob" [ 1 ] 'n'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+
+            -- Die Liste ist hier problematisch: [('K', ('K', [0])), ('a', ('n', [1])), ('n', Nothing)]
+            --, test "it adds one character to a sub-register if there is no space between two characters in the parent register for a long word" <|
+            --    \_ ->
+            --        let
+            --            calculatedResult =
+            --                [ Insert "bob" [ 0 ] 'K'
+            --                , Insert "bob" [ 1 ] 'n'
+            --                , Insert "bob" [ 5 ] 'g'
+            --                , Insert "bob" [ 11 ] 'u'
+            --                , Insert "bob" [ 14 ] 'r'
+            --                , Insert "bob" [ 15 ] 'u'
+            --                ]
+            --                    |> CRDT.update "bob" "Kanguru"
+            --            expectedResult =
+            --                [ Insert "bob" [ 0 ] 'K'
+            --                , Insert "bob" [ 0, 6 ] 'a'
+            --                , Insert "bob" [ 1 ] 'n'
+            --                , Insert "bob" [ 5 ] 'g'
+            --                , Insert "bob" [ 11 ] 'u'
+            --                , Insert "bob" [ 14 ] 'r'
+            --                , Insert "bob" [ 15 ] 'u'
+            --                ]
+            --        in
+            --        Expect.equal calculatedResult expectedResult
+            , test "it adds two characters to a sub-register if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "Hel"
+
+                        expectedResult =
+                            [ Insert "bob" [ 15, 0 ] 'l'
+                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             ]
         , describe "CRDT.zip"
             [ test "it combines to list as an outer join" <|
                 \_ ->
                     let
                         calculatedResult =
-                            CRDT.zip [ 'H', 'E', 'L' ] [ ( 'H', [ 3 ] ), ( 'E', [ 6 ] ) ]
+                            CRDT.zip [ 'H', 'E', 'L' ] [ ( 'H', [ 3 ] ), ( 'E', [ 6 ] ) ] []
 
                         expectedResult =
-                            [ ( Just 'H', Just ( 'H', [ 3 ] ) )
+                            [ ( Just 'L', Nothing )
                             , ( Just 'E', Just ( 'E', [ 6 ] ) )
-                            , ( Just 'L', Nothing )
+                            , ( Just 'H', Just ( 'H', [ 3 ] ) )
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "it only combines matching characters" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            CRDT.zip [ 'K', 'A', 'N' ] [ ( 'K', [ 2 ] ), ( 'N', [ 7 ] ) ] []
+
+                        expectedResult =
+                            [ ( Just 'N', Just ( 'N', [ 7 ] ) )
+                            , ( Just 'A', Nothing )
+                            , ( Just 'K', Just ( 'K', [ 2 ] ) )
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
