@@ -78,30 +78,26 @@ update : UserId -> String -> CRDT -> CRDT
 update userId updatedString crdt =
     if String.length updatedString > List.length (toCharsWithPath crdt) then
         -- This could also be replace though...
-        addCharsToCRDT (String.toList updatedString) (toCharsWithPath crdt) crdt
+        addCharsToCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
 
     else
         crdt
 
 
-addCharsToCRDT : List Char -> List ( Char, Path ) -> CRDT -> CRDT
-addCharsToCRDT charsToAdd charPathList crdt =
+addCharsToCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
+addCharsToCRDT initialString charsToAdd charPathList crdt =
     case charsToAdd of
         currentCharToAdd :: restCharsToAdd ->
             case charPathList of
                 ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
                     if currentCharToAdd == currentCharWithPath then
-                        addCharsToCRDT restCharsToAdd restCharsWithPath crdt
+                        addCharsToCRDT initialString restCharsToAdd restCharsWithPath crdt
 
                     else
-                        update "bob"
-                            (String.fromList charsToAdd)
-                            (addCharBefore currentPath currentCharToAdd crdt)
+                        update "bob" initialString (addCharBefore currentPath currentCharToAdd crdt)
 
                 [] ->
-                    update "bob"
-                        (String.fromList charsToAdd)
-                        (addCharAtEnd currentCharToAdd crdt)
+                    update "bob" initialString (addCharAtEnd currentCharToAdd crdt)
 
         [] ->
             crdt
