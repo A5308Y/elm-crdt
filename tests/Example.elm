@@ -167,32 +167,4 @@ suite =
                     in
                     Expect.equal calculatedResult expectedResult
             ]
-        , describe "CRDT.zip"
-            [ test "it combines to list as an outer join" <|
-                \_ ->
-                    let
-                        calculatedResult =
-                            CRDT.zip [ 'H', 'E', 'L' ] [ ( 'H', [ 3 ] ), ( 'E', [ 6 ] ) ] []
-
-                        expectedResult =
-                            [ ( Just 'L', Nothing )
-                            , ( Just 'E', Just ( 'E', [ 6 ] ) )
-                            , ( Just 'H', Just ( 'H', [ 3 ] ) )
-                            ]
-                    in
-                    Expect.equal calculatedResult expectedResult
-            , test "it only combines matching characters" <|
-                \_ ->
-                    let
-                        calculatedResult =
-                            CRDT.zip [ 'K', 'A', 'N' ] [ ( 'K', [ 2 ] ), ( 'N', [ 7 ] ) ] []
-
-                        expectedResult =
-                            [ ( Just 'N', Just ( 'N', [ 7 ] ) )
-                            , ( Just 'A', Nothing )
-                            , ( Just 'K', Just ( 'K', [ 2 ] ) )
-                            ]
-                    in
-                    Expect.equal calculatedResult expectedResult
-            ]
         ]

@@ -1,18 +1,10 @@
-module CRDT exposing (Operation(..), demo, toString, update, zip)
+module CRDT exposing (Operation(..), demo, toString, update)
 
 import Array
 
 
 type alias CRDT =
     List Operation
-
-
-type alias DiffList =
-    List DiffListEntry
-
-
-type alias DiffListEntry =
-    ( Maybe Char, Maybe ( Char, Path ) )
 
 
 type Operation
@@ -61,6 +53,7 @@ toCharsWithPath crdt =
         |> List.map charWithPath
 
 
+charWithPath : Operation -> ( Char, Path )
 charWithPath operation =
     case operation of
         Insert _ path char ->
@@ -83,33 +76,45 @@ pathFromOperation operation =
 
 update : UserId -> String -> CRDT -> CRDT
 update userId updatedString crdt =
-    zip (String.toList updatedString) (toCharsWithPath crdt) []
-        |> List.foldr updateOnce crdt
+    if String.length updatedString > List.length (toCharsWithPath crdt) then
+        -- This could also be replace though...
+        addCharsToCRDT (String.toList updatedString) (toCharsWithPath crdt) crdt
+
+    else
+        crdt
 
 
+addCharsToCRDT : List Char -> List ( Char, Path ) -> CRDT -> CRDT
+addCharsToCRDT charsToAdd charPathList crdt =
+    case charsToAdd of
+        currentCharToAdd :: restCharsToAdd ->
+            case charPathList of
+                ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
+                    if currentCharToAdd == currentCharWithPath then
+                        addCharsToCRDT restCharsToAdd restCharsWithPath crdt
 
---I can only add things to the list!
+                    else
+                        update "bob"
+                            (String.fromList charsToAdd)
+                            (addCharBefore currentPath currentCharToAdd crdt)
 
+                [] ->
+                    update "bob"
+                        (String.fromList charsToAdd)
+                        (addCharAtEnd currentCharToAdd crdt)
 
-updateOnce : DiffListEntry -> CRDT -> CRDT
-updateOnce diffListEntry crdt =
-    case diffListEntry of
-        ( Just updatedChar, Just ( presentChar, path ) ) ->
+        [] ->
             crdt
 
-        ( Nothing, Just ( presentChar, path ) ) ->
-            --Remove?
-            crdt
 
-        ( Just updatedChar, Nothing ) ->
-            if endOf String then
-                Insert "bob" (incrementPath (pathAtTheEndOf crdt)) updatedChar :: crdt
+addCharBefore : Path -> Char -> CRDT -> CRDT
+addCharBefore path char crdt =
+    Insert "bob" (pathBefore path crdt) char :: crdt
 
-            else
-                Insert "bob" (pathBefore path crdt) updatedChar :: crdt
 
-        ( Nothing, Nothing ) ->
-            crdt
+addCharAtEnd : Char -> CRDT -> CRDT
+addCharAtEnd char crdt =
+    Insert "bob" (pathAfter crdt) char :: crdt
 
 
 crdtUntil supremumPath crdt =
@@ -120,6 +125,10 @@ crdtUntil supremumPath crdt =
                     path < supremumPath
         )
         crdt
+
+
+pathAfter crdt =
+    incrementPath (pathAtTheEndOf crdt)
 
 
 pathBefore : Path -> CRDT -> Path
@@ -196,59 +205,6 @@ pathAtTheEndOf crdt =
 crdtRegisterMaximum : Int
 crdtRegisterMaximum =
     15
-
-
-zip : List Char -> List ( Char, Path ) -> DiffList -> DiffList
-zip updatedChars operationResults diffList =
-    case updatedChars of
-        updatedChar :: restUpdatedChars ->
-            case operationResults of
-                [] ->
-                    -- Add to end of crdt
-                    let
-                        newDifflist =
-                            ( Just updatedChar, Nothing ) :: diffList
-                    in
-                    zip restUpdatedChars operationResults newDifflist
-
-                ( operationResultChar, operationResultPath ) :: restOperations ->
-                    if updatedChar == operationResultChar then
-                        let
-                            newDifflist =
-                                ( Just updatedChar, Just ( operationResultChar, operationResultPath ) ) :: diffList
-                        in
-                        zip restUpdatedChars restOperations newDifflist
-
-                    else
-                        let
-                            newDifflist =
-                                ( Just updatedChar, Nothing ) :: diffList
-                        in
-                        zip restUpdatedChars operationResults newDifflist
-
-        [] ->
-            case operationResults of
-                operationResult :: restOperations ->
-                    --removal
-                    zip updatedChars operationResults diffList
-
-                [] ->
-                    diffList
-
-
-reverseZip : List ( Char, Path ) -> List Char -> DiffList
-reverseZip secondList firstList =
-    let
-        firstArray =
-            Array.fromList firstList
-
-        secondArray =
-            Array.fromList secondList
-    in
-    Array.indexedMap
-        (\indexInSecond elementFromSecond -> ( Array.get indexInSecond firstArray, Just elementFromSecond ))
-        secondArray
-        |> Array.toList
 
 
 
