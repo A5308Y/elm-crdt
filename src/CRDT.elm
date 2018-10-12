@@ -47,6 +47,7 @@ toString crdt =
         |> String.concat
 
 
+toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
     crdt
         |> List.sortBy pathFromOperation
@@ -113,6 +114,7 @@ addCharAtEnd char crdt =
     Insert "bob" (pathAfter crdt) char :: crdt
 
 
+crdtUntil : Path -> CRDT -> CRDT
 crdtUntil supremumPath crdt =
     List.filter
         (\operation ->
@@ -123,6 +125,7 @@ crdtUntil supremumPath crdt =
         crdt
 
 
+pathAfter : CRDT -> Path
 pathAfter crdt =
     incrementPath (pathAtTheEndOf crdt)
 
@@ -143,6 +146,7 @@ pathBefore path crdt =
         newSubregister minPath
 
 
+isSpaceBetween : Path -> Path -> Bool
 isSpaceBetween minPath supremumPath =
     case minPath of
         [ minNumber ] ->
@@ -157,10 +161,12 @@ isSpaceBetween minPath supremumPath =
             False
 
 
+choosePathBetween : Path -> Path -> Path
 choosePathBetween minPath supremumPath =
     List.map ((+) 1) minPath
 
 
+newSubregister : Path -> Path
 newSubregister minPath =
     case minPath of
         [ minNumber ] ->
