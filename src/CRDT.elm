@@ -1,4 +1,4 @@
-module CRDT exposing (Operation(..), demo, toString, update)
+module CRDT exposing (CRDT, Operation(..), demo, toString, update)
 
 import Array
 
@@ -25,15 +25,15 @@ type alias Path =
 
 demo : CRDT
 demo =
-    [ Insert "bob" [ 0 ] 'H'
-    , Insert "bob" [ 1 ] 'E'
-    , Insert "bob" [ 5 ] ' '
-    , Insert "bob" [ 2 ] 'L'
-    , Insert "bob" [ 10 ] 'R'
+    [ Insert "bob" [ 1 ] 'H'
+    , Insert "bob" [ 2 ] 'E'
+    , Insert "bob" [ 6 ] ' '
     , Insert "bob" [ 3 ] 'L'
+    , Insert "bob" [ 10 ] 'R'
+    , Insert "bob" [ 4 ] 'L'
     , Insert "bob" [ 8 ] 'O'
-    , Insert "bob" [ 4 ] 'O'
-    , Insert "bob" [ 6 ] 'W'
+    , Insert "bob" [ 5 ] 'O'
+    , Insert "bob" [ 7 ] 'W'
     , Insert "bob" [ 11 ] 'L'
     , Insert "bob" [ 13 ] 'D'
     ]

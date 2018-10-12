@@ -14,7 +14,7 @@ suite =
                 \_ ->
                     let
                         crdt =
-                            [ Insert "bob" [ 0 ] 'H'
+                            [ Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'i'
                             ]
                     in
@@ -24,7 +24,7 @@ suite =
                     let
                         crdt =
                             [ Insert "bob" [ 7 ] 'i'
-                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 1 ] 'H'
                             ]
                     in
                     Expect.equal (CRDT.toString crdt) "Hi"
@@ -33,7 +33,7 @@ suite =
             --    \_ ->
             --        let
             --            crdt =
-            --                [ Insert "bob" [ 0 ] 'H'
+            --                [ Insert "bob" [ 1 ] 'H'
             --                , Insert "bob" [ 7 ] 'i'
             --                , Insert "alice" [ 0 ] 'H'
             --                , Insert "alice" [ 7 ] 'o'
@@ -44,15 +44,15 @@ suite =
                 \_ ->
                     let
                         crdt =
-                            [ Insert "bob" [ 0 ] 'H'
-                            , Insert "bob" [ 6 ] 'W'
+                            [ Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 7 ] 'W'
                             , Insert "bob" [ 11 ] 'L'
                             , Insert "bob" [ 10 ] 'R'
+                            , Insert "bob" [ 4 ] 'L'
+                            , Insert "bob" [ 5 ] 'O'
                             , Insert "bob" [ 3 ] 'L'
-                            , Insert "bob" [ 4 ] 'O'
-                            , Insert "bob" [ 2 ] 'L'
-                            , Insert "bob" [ 1 ] 'E'
-                            , Insert "bob" [ 5 ] ' '
+                            , Insert "bob" [ 2 ] 'E'
+                            , Insert "bob" [ 6 ] ' '
                             , Insert "bob" [ 8 ] 'O'
                             , Insert "bob" [ 13 ] 'D'
                             ]
@@ -64,14 +64,14 @@ suite =
                 \_ ->
                     let
                         calculatedResult =
-                            [ Insert "bob" [ 0 ] 'H'
+                            [ Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
                                 |> CRDT.update "bob" "Hel"
 
                         expectedResult =
                             [ Insert "bob" [ 8 ] 'l'
-                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
                     in
@@ -80,7 +80,7 @@ suite =
                 \_ ->
                     let
                         calculatedResult =
-                            [ Insert "bob" [ 0 ] 'H'
+                            [ Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
                                 |> CRDT.update "bob" "Hell"
@@ -88,7 +88,7 @@ suite =
                         expectedResult =
                             [ Insert "bob" [ 9 ] 'l'
                             , Insert "bob" [ 8 ] 'l'
-                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
                     in
@@ -97,14 +97,14 @@ suite =
                 \_ ->
                     let
                         calculatedResult =
-                            [ Insert "bob" [ 0 ] 'H'
+                            [ Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
                                 |> CRDT.update "bob" "Hel"
 
                         expectedResult =
                             [ Insert "bob" [ 15, 0 ] 'l'
-                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
                     in
@@ -153,14 +153,14 @@ suite =
                 \_ ->
                     let
                         calculatedResult =
-                            [ Insert "bob" [ 0 ] 'H'
+                            [ Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
                                 |> CRDT.update "bob" "Hel"
 
                         expectedResult =
                             [ Insert "bob" [ 15, 0 ] 'l'
-                            , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
                     in
