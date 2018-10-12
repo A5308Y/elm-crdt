@@ -125,31 +125,30 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
+            , test "it adds one character to a sub-register if there is no space between two characters in the parent register for a long word" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 0 ] 'K'
+                            , Insert "bob" [ 1 ] 'n'
+                            , Insert "bob" [ 5 ] 'g'
+                            , Insert "bob" [ 11 ] 'u'
+                            , Insert "bob" [ 14 ] 'r'
+                            , Insert "bob" [ 15 ] 'u'
+                            ]
+                                |> CRDT.update "bob" "Kanguru"
 
-            -- Die Liste ist hier problematisch: [('K', ('K', [0])), ('a', ('n', [1])), ('n', Nothing)]
-            --, test "it adds one character to a sub-register if there is no space between two characters in the parent register for a long word" <|
-            --    \_ ->
-            --        let
-            --            calculatedResult =
-            --                [ Insert "bob" [ 0 ] 'K'
-            --                , Insert "bob" [ 1 ] 'n'
-            --                , Insert "bob" [ 5 ] 'g'
-            --                , Insert "bob" [ 11 ] 'u'
-            --                , Insert "bob" [ 14 ] 'r'
-            --                , Insert "bob" [ 15 ] 'u'
-            --                ]
-            --                    |> CRDT.update "bob" "Kanguru"
-            --            expectedResult =
-            --                [ Insert "bob" [ 0 ] 'K'
-            --                , Insert "bob" [ 0, 6 ] 'a'
-            --                , Insert "bob" [ 1 ] 'n'
-            --                , Insert "bob" [ 5 ] 'g'
-            --                , Insert "bob" [ 11 ] 'u'
-            --                , Insert "bob" [ 14 ] 'r'
-            --                , Insert "bob" [ 15 ] 'u'
-            --                ]
-            --        in
-            --        Expect.equal calculatedResult expectedResult
+                        expectedResult =
+                            [ Insert "bob" [ 0, 0 ] 'a'
+                            , Insert "bob" [ 0 ] 'K'
+                            , Insert "bob" [ 1 ] 'n'
+                            , Insert "bob" [ 5 ] 'g'
+                            , Insert "bob" [ 11 ] 'u'
+                            , Insert "bob" [ 14 ] 'r'
+                            , Insert "bob" [ 15 ] 'u'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             , test "it adds two characters to a sub-register if the parent register is already full" <|
                 \_ ->
                     let
@@ -162,6 +161,22 @@ suite =
                         expectedResult =
                             [ Insert "bob" [ 15, 0 ] 'l'
                             , Insert "bob" [ 0 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "adds characters to a sub-register in front if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "AHe"
+
+                        expectedResult =
+                            [ Insert "bob" [ 0, 0 ] 'A'
+                            , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
                     in

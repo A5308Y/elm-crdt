@@ -189,7 +189,7 @@ pathAtTheEndOf crdt =
                 |> List.reverse
                 |> List.head
                 |> Maybe.map pathFromOperation
-                |> Maybe.withDefault [ crdtRegisterMaximum ]
+                |> Maybe.withDefault [ 0 ]
     in
     if maxPath == [ 15 ] then
         [ 15, 0 ]
