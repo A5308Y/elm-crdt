@@ -181,5 +181,22 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
+            , test "adds multiple characters to a sub-register in front if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            [ Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                                |> CRDT.update "bob" "ABHe"
+
+                        expectedResult =
+                            [ Insert "bob" [ 0, 0 ] 'A'
+                            , Insert "bob" [ 0, 6 ] 'B'
+                            , Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 15 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             ]
         ]
