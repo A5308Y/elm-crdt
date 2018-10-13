@@ -17,8 +17,8 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 7 ] 'i'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 7 ] 'i' False
                                 ]
                             }
                     in
@@ -29,8 +29,8 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 7 ] 'i'
-                                , Insert "bob" [ 1 ] 'H'
+                                [ Insert "bob" [ 7 ] 'i' False
+                                , Insert "bob" [ 1 ] 'H' False
                                 ]
                             }
                     in
@@ -41,9 +41,8 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 7 ] 'i'
-                                , Insert "bob" [ 1 ] 'H'
-                                , Remove "bob" [ 7 ]
+                                [ Insert "bob" [ 7 ] 'i' True
+                                , Insert "bob" [ 1 ] 'H' False
                                 ]
                             }
                     in
@@ -54,10 +53,10 @@ suite =
             --    \_ ->
             --        let
             --            crdt =
-            --                {seed = Random.initialSeed 42, operations = [ Insert "bob" [ 1 ] 'H'
-            --                , Insert "bob" [ 7 ] 'i'
-            --                , Insert "alice" [ 0 ] 'H'
-            --                , Insert "alice" [ 7 ] 'o'
+            --                {seed = Random.initialSeed 42, operations = [ Insert "bob" [ 1 ] 'H' False
+            --                , Insert "bob" [ 7 ] 'i' False
+            --                , Insert "alice" [ 0 ] 'H' False
+            --                , Insert "alice" [ 7 ] 'o' False
             --                ]
             --        in
             --        Expect.equal (CRDT.toString crdt) "Hi"
@@ -67,17 +66,17 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 7 ] 'W'
-                                , Insert "bob" [ 11 ] 'L'
-                                , Insert "bob" [ 10 ] 'R'
-                                , Insert "bob" [ 4 ] 'L'
-                                , Insert "bob" [ 5 ] 'O'
-                                , Insert "bob" [ 3 ] 'L'
-                                , Insert "bob" [ 2 ] 'E'
-                                , Insert "bob" [ 6 ] ' '
-                                , Insert "bob" [ 8 ] 'O'
-                                , Insert "bob" [ 13 ] 'D'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 7 ] 'W' False
+                                , Insert "bob" [ 11 ] 'L' False
+                                , Insert "bob" [ 10 ] 'R' False
+                                , Insert "bob" [ 4 ] 'L' False
+                                , Insert "bob" [ 5 ] 'O' False
+                                , Insert "bob" [ 3 ] 'L' False
+                                , Insert "bob" [ 2 ] 'E' False
+                                , Insert "bob" [ 6 ] ' ' False
+                                , Insert "bob" [ 8 ] 'O' False
+                                , Insert "bob" [ 13 ] 'D' False
                                 ]
                             }
                     in
@@ -90,17 +89,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 7 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 7 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 7 ] 'e'
+                            [ Insert "bob" [ 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 7 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -110,18 +109,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 7 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 7 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hell"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 11 ] 'l'
-                            , Insert "bob" [ 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 7 ] 'e'
+                            [ Insert "bob" [ 11 ] 'l' False
+                            , Insert "bob" [ 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 7 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -131,17 +130,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 14, 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 14, 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -151,17 +150,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 0 ] 'K'
-                                , Insert "bob" [ 1 ] 'n'
+                                [ Insert "bob" [ 0 ] 'K' False
+                                , Insert "bob" [ 1 ] 'n' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Kan"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 10 ] 'a'
-                            , Insert "bob" [ 0 ] 'K'
-                            , Insert "bob" [ 1 ] 'n'
+                            [ Insert "bob" [ 0, 10 ] 'a' False
+                            , Insert "bob" [ 0 ] 'K' False
+                            , Insert "bob" [ 1 ] 'n' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -171,25 +170,25 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 0 ] 'K'
-                                , Insert "bob" [ 1 ] 'n'
-                                , Insert "bob" [ 5 ] 'g'
-                                , Insert "bob" [ 11 ] 'u'
-                                , Insert "bob" [ 14 ] 'r'
-                                , Insert "bob" [ 14 ] 'u'
+                                [ Insert "bob" [ 0 ] 'K' False
+                                , Insert "bob" [ 1 ] 'n' False
+                                , Insert "bob" [ 5 ] 'g' False
+                                , Insert "bob" [ 11 ] 'u' False
+                                , Insert "bob" [ 14 ] 'r' False
+                                , Insert "bob" [ 14 ] 'u' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Kanguru"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 10 ] 'a'
-                            , Insert "bob" [ 0 ] 'K'
-                            , Insert "bob" [ 1 ] 'n'
-                            , Insert "bob" [ 5 ] 'g'
-                            , Insert "bob" [ 11 ] 'u'
-                            , Insert "bob" [ 14 ] 'r'
-                            , Insert "bob" [ 14 ] 'u'
+                            [ Insert "bob" [ 0, 10 ] 'a' False
+                            , Insert "bob" [ 0 ] 'K' False
+                            , Insert "bob" [ 1 ] 'n' False
+                            , Insert "bob" [ 5 ] 'g' False
+                            , Insert "bob" [ 11 ] 'u' False
+                            , Insert "bob" [ 14 ] 'r' False
+                            , Insert "bob" [ 14 ] 'u' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -199,17 +198,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 14, 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 14, 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -219,17 +218,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "AHe"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 10 ] 'A'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 0, 10 ] 'A' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -239,18 +238,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "ABHe"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 11 ] 'B'
-                            , Insert "bob" [ 0, 10 ] 'A'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 0, 11 ] 'B' False
+                            , Insert "bob" [ 0, 10 ] 'A' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -260,18 +259,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hell"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 14, 11 ] 'l'
-                            , Insert "bob" [ 14, 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 14, 11 ] 'l' False
+                            , Insert "bob" [ 14, 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -281,21 +280,21 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 14, 14 ] 'l'
-                                , Insert "bob" [ 14, 10 ] 'l'
-                                , Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'e'
+                                [ Insert "bob" [ 14, 14 ] 'l' False
+                                , Insert "bob" [ 14, 10 ] 'l' False
+                                , Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'e' False
                                 ]
                             }
                                 |> CRDT.update "bob" "Hello"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 14, 14, 10 ] 'o'
-                            , Insert "bob" [ 14, 14 ] 'l'
-                            , Insert "bob" [ 14, 10 ] 'l'
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'e'
+                            [ Insert "bob" [ 14, 14, 10 ] 'o' False
+                            , Insert "bob" [ 14, 14 ] 'l' False
+                            , Insert "bob" [ 14, 10 ] 'l' False
+                            , Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'e' False
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -305,17 +304,16 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 14 ] 'r'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 14 ] 'r' False
                                 ]
                             }
                                 |> CRDT.update "bob" "H"
                                 |> .operations
 
                         expectedResult =
-                            [ Remove "bob" [ 14 ]
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 14 ] 'r'
+                            [ Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 14 ] 'r' True
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -325,20 +323,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 13 ] 'i'
-                                , Insert "bob" [ 14 ] 'r'
+                                [ Insert "bob" [ 1 ] 'H' False
+                                , Insert "bob" [ 13 ] 'i' False
+                                , Insert "bob" [ 14 ] 'r' False
                                 ]
                             }
                                 |> CRDT.update "bob" "H"
                                 |> .operations
 
                         expectedResult =
-                            [ Remove "bob" [ 14 ]
-                            , Remove "bob" [ 13 ]
-                            , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 13 ] 'i'
-                            , Insert "bob" [ 14 ] 'r'
+                            [ Insert "bob" [ 1 ] 'H' False
+                            , Insert "bob" [ 13 ] 'i' True
+                            , Insert "bob" [ 14 ] 'r' True
                             ]
                     in
                     Expect.equal calculatedResult expectedResult

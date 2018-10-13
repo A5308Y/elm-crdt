@@ -9,8 +9,7 @@ type alias CRDT =
 
 
 type Operation
-    = Insert UserId Path Char
-    | Remove UserId Path
+    = Insert UserId Path Char Bool
 
 
 type alias UserId =
@@ -32,9 +31,9 @@ demo =
 
 abc =
     { operations =
-        [ Insert "bob" [ 1 ] 'A'
-        , Insert "bob" [ 2 ] 'B'
-        , Insert "bob" [ 6 ] 'C'
+        [ Insert "bob" [ 1 ] 'A' False
+        , Insert "bob" [ 2 ] 'B' False
+        , Insert "bob" [ 6 ] 'C' False
         ]
     , seed = Random.initialSeed 42
     }
@@ -42,17 +41,17 @@ abc =
 
 helloWorld =
     { operations =
-        [ Insert "bob" [ 1 ] 'H'
-        , Insert "bob" [ 2 ] 'E'
-        , Insert "bob" [ 6 ] ' '
-        , Insert "bob" [ 3 ] 'L'
-        , Insert "bob" [ 10 ] 'R'
-        , Insert "bob" [ 4 ] 'L'
-        , Insert "bob" [ 8 ] 'O'
-        , Insert "bob" [ 5 ] 'O'
-        , Insert "bob" [ 7 ] 'W'
-        , Insert "bob" [ 11 ] 'L'
-        , Insert "bob" [ 13 ] 'D'
+        [ Insert "bob" [ 1 ] 'H' False
+        , Insert "bob" [ 2 ] 'E' False
+        , Insert "bob" [ 6 ] ' ' False
+        , Insert "bob" [ 3 ] 'L' False
+        , Insert "bob" [ 10 ] 'R' False
+        , Insert "bob" [ 4 ] 'L' False
+        , Insert "bob" [ 8 ] 'O' False
+        , Insert "bob" [ 5 ] 'O' False
+        , Insert "bob" [ 7 ] 'W' False
+        , Insert "bob" [ 11 ] 'L' False
+        , Insert "bob" [ 13 ] 'D' False
         ]
     , seed = Random.initialSeed 42
     }
@@ -61,26 +60,22 @@ helloWorld =
 toString : CRDT -> String
 toString crdt =
     crdt.operations
-        |> List.filter (removedAndRemovals crdt.operations)
+        |> List.filter (removeTombs crdt.operations)
         |> List.sortBy pathFromOperation
         |> List.map displayInsert
         |> String.concat
 
 
-removedAndRemovals operations operation =
+removeTombs operations operation =
     case operation of
-        Remove _ _ ->
-            False
-
-        Insert _ path _ ->
-            List.member (Remove "bob" path) operations
-                |> not
+        Insert _ _ _ isTomb ->
+            not isTomb
 
 
 toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
     crdt.operations
-        |> List.filter (removedAndRemovals crdt.operations)
+        |> List.filter (removeTombs crdt.operations)
         |> List.sortBy pathFromOperation
         |> List.map charWithPath
 
@@ -88,30 +83,21 @@ toCharsWithPath crdt =
 charWithPath : Operation -> ( Char, Path )
 charWithPath operation =
     case operation of
-        Insert _ path char ->
+        Insert _ path char _ ->
             ( char, path )
-
-        Remove _ path ->
-            ( '∅', path )
 
 
 displayInsert : Operation -> String
 displayInsert operation =
     case operation of
-        Insert _ _ char ->
+        Insert _ _ char _ ->
             String.fromChar char
-
-        Remove _ _ ->
-            "∅"
 
 
 pathFromOperation : Operation -> Path
 pathFromOperation operation =
     case operation of
-        Insert _ path _ ->
-            path
-
-        Remove _ path ->
+        Insert _ path _ _ ->
             path
 
 
@@ -153,15 +139,48 @@ removeCharsFromCRDT initialString charsToKeep charPathList crdt =
                         removeCharsFromCRDT initialString restCharsToKeep restCharsWithPath crdt
 
                     else
-                        { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
+                        crdt
+                            |> markAsTomb currentPath
                             |> update "bob" initialString
 
                 [] ->
-                    { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
+                    crdt
+                        |> markAsTomb currentPath
                         |> update "bob" initialString
 
         [] ->
             crdt
+
+
+markAsTomb : Path -> CRDT -> CRDT
+markAsTomb targetPath crdt =
+    case findOperation targetPath crdt of
+        Nothing ->
+            crdt
+
+        Just ( index, Insert userId path char _ ) ->
+            let
+                updatedOperations =
+                    crdt.operations
+                        |> Array.fromList
+                        |> Array.set index (Insert userId path char True)
+                        |> Array.toList
+            in
+            { crdt | operations = updatedOperations, seed = crdt.seed }
+
+
+findOperation : Path -> CRDT -> Maybe ( Int, Operation )
+findOperation path crdt =
+    crdt.operations
+        |> Array.fromList
+        |> Array.indexedMap (\index operation -> ( index, operation ))
+        |> Array.filter (pathFilter path)
+        |> Array.get 0
+
+
+pathFilter : Path -> ( Int, Operation ) -> Bool
+pathFilter queriedPath ( index, Insert _ path _ _ ) =
+    queriedPath == path
 
 
 addCharBefore : Path -> Char -> CRDT -> CRDT
@@ -170,7 +189,7 @@ addCharBefore path char crdt =
         ( newPath, newSeed ) =
             pathBefore path crdt
     in
-    { crdt | operations = Insert "bob" newPath char :: crdt.operations, seed = newSeed }
+    { crdt | operations = Insert "bob" newPath char False :: crdt.operations, seed = newSeed }
 
 
 addCharAtEnd : Char -> CRDT -> CRDT
@@ -179,7 +198,7 @@ addCharAtEnd char crdt =
         ( newPath, newSeed ) =
             pathAfter crdt
     in
-    { crdt | operations = Insert "bob" newPath char :: crdt.operations, seed = newSeed }
+    { crdt | operations = Insert "bob" newPath char False :: crdt.operations, seed = newSeed }
 
 
 crdtUntil : Path -> CRDT -> CRDT
@@ -189,10 +208,7 @@ crdtUntil supremumPath crdt =
             List.filter
                 (\operation ->
                     case operation of
-                        Insert _ path _ ->
-                            path < supremumPath
-
-                        Remove _ path ->
+                        Insert _ path _ _ ->
                             path < supremumPath
                 )
                 crdt.operations
