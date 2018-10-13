@@ -26,6 +26,20 @@ type alias Path =
 
 demo : CRDT
 demo =
+    abc
+
+
+abc =
+    { operations =
+        [ Insert "bob" [ 1 ] 'A'
+        , Insert "bob" [ 2 ] 'B'
+        , Insert "bob" [ 6 ] 'C'
+        ]
+    , seed = Random.initialSeed 42
+    }
+
+
+helloWorld =
     { operations =
         [ Insert "bob" [ 1 ] 'H'
         , Insert "bob" [ 2 ] 'E'
@@ -143,7 +157,14 @@ crdtUntil supremumPath crdt =
 
 pathAfter : CRDT -> ( Path, Random.Seed )
 pathAfter crdt =
-    ( incrementPath (pathAtTheEndOf crdt), crdt.seed )
+    let
+        supremumPath =
+            [ crdtRegisterMaximum ]
+
+        infimumPath =
+            pathAtTheEndOf (crdtUntil supremumPath crdt)
+    in
+    choosePathBetween crdt.seed infimumPath supremumPath
 
 
 pathBefore : Path -> CRDT -> ( Path, Random.Seed )
@@ -152,10 +173,10 @@ pathBefore path crdt =
         supremumPath =
             path
 
-        minPath =
+        infimumPath =
             pathAtTheEndOf (crdtUntil supremumPath crdt)
     in
-    choosePathBetween crdt.seed minPath supremumPath
+    choosePathBetween crdt.seed infimumPath supremumPath
 
 
 choosePathBetween : Random.Seed -> Path -> Path -> ( Path, Random.Seed )
@@ -175,7 +196,7 @@ choosePathBetween seed infimumPath supremumPath =
                         nextBetweenStep seed infimumHead supremumHead
 
                 [] ->
-                    nextBetweenStep seed infimumHead crdtRegisterMaximum
+                    choosePathBetween seed infimumPath [ crdtRegisterMaximum ]
 
         [] ->
             case supremumPath of
@@ -194,30 +215,6 @@ nextBetweenStep seed infimum supremum =
     ( [ randomInt ], nextSeed )
 
 
-newSubregister : Random.Seed -> Path -> ( Path, Random.Seed )
-newSubregister seed minPath =
-    case minPath of
-        [ minNumber ] ->
-            let
-                ( number, nextSeed ) =
-                    Random.step (Random.int minNumber crdtRegisterMaximum) seed
-            in
-            ( [ minNumber, number ], nextSeed )
-
-        _ ->
-            ( minPath, seed )
-
-
-incrementPath : Path -> Path
-incrementPath path =
-    case path of
-        [ number ] ->
-            [ number + 1 ]
-
-        _ ->
-            path
-
-
 pathAtTheEndOf : CRDT -> Path
 pathAtTheEndOf crdt =
     let
@@ -229,11 +226,7 @@ pathAtTheEndOf crdt =
                 |> Maybe.map pathFromOperation
                 |> Maybe.withDefault [ 0 ]
     in
-    if maxPath == [ crdtRegisterMaximum ] then
-        [ crdtRegisterMaximum, 0 ]
-
-    else
-        maxPath
+    maxPath
 
 
 crdtRegisterMaximum : Int
@@ -243,7 +236,7 @@ crdtRegisterMaximum =
 
 crdtRegisterMinimum : Int
 crdtRegisterMinimum =
-    1
+    0
 
 
 

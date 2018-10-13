@@ -35,6 +35,7 @@ suite =
                             }
                     in
                     Expect.equal (CRDT.toString crdt) "Hi"
+            , todo "constructs a to be resolved string if different users edited the same position"
 
             --, test "constructs a to be resolved string if different users edited the same position" <|
             --    \_ ->
@@ -84,7 +85,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 8 ] 'l'
+                            [ Insert "bob" [ 10 ] 'l'
                             , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
@@ -104,8 +105,8 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 9 ] 'l'
-                            , Insert "bob" [ 8 ] 'l'
+                            [ Insert "bob" [ 11 ] 'l'
+                            , Insert "bob" [ 10 ] 'l'
                             , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 7 ] 'e'
                             ]
@@ -118,16 +119,16 @@ suite =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 15 ] 'e'
+                                , Insert "bob" [ 14 ] 'e'
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 15, 0 ] 'l'
+                            [ Insert "bob" [ 14, 10 ] 'l'
                             , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 15 ] 'e'
+                            , Insert "bob" [ 14 ] 'e'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -162,7 +163,7 @@ suite =
                                 , Insert "bob" [ 5 ] 'g'
                                 , Insert "bob" [ 11 ] 'u'
                                 , Insert "bob" [ 14 ] 'r'
-                                , Insert "bob" [ 15 ] 'u'
+                                , Insert "bob" [ 14 ] 'u'
                                 ]
                             }
                                 |> CRDT.update "bob" "Kanguru"
@@ -175,7 +176,7 @@ suite =
                             , Insert "bob" [ 5 ] 'g'
                             , Insert "bob" [ 11 ] 'u'
                             , Insert "bob" [ 14 ] 'r'
-                            , Insert "bob" [ 15 ] 'u'
+                            , Insert "bob" [ 14 ] 'u'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -186,16 +187,16 @@ suite =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 15 ] 'e'
+                                , Insert "bob" [ 14 ] 'e'
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 15, 0 ] 'l'
+                            [ Insert "bob" [ 14, 10 ] 'l'
                             , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 15 ] 'e'
+                            , Insert "bob" [ 14 ] 'e'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -206,7 +207,7 @@ suite =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 15 ] 'e'
+                                , Insert "bob" [ 14 ] 'e'
                                 ]
                             }
                                 |> CRDT.update "bob" "AHe"
@@ -215,7 +216,7 @@ suite =
                         expectedResult =
                             [ Insert "bob" [ 0, 10 ] 'A'
                             , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 15 ] 'e'
+                            , Insert "bob" [ 14 ] 'e'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -226,7 +227,7 @@ suite =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ Insert "bob" [ 1 ] 'H'
-                                , Insert "bob" [ 15 ] 'e'
+                                , Insert "bob" [ 14 ] 'e'
                                 ]
                             }
                                 |> CRDT.update "bob" "ABHe"
@@ -236,7 +237,52 @@ suite =
                             [ Insert "bob" [ 0, 11 ] 'B'
                             , Insert "bob" [ 0, 10 ] 'A'
                             , Insert "bob" [ 1 ] 'H'
-                            , Insert "bob" [ 15 ] 'e'
+                            , Insert "bob" [ 14 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "adds multiple characters to a sub-register at the end if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ Insert "bob" [ 1 ] 'H'
+                                , Insert "bob" [ 14 ] 'e'
+                                ]
+                            }
+                                |> CRDT.update "bob" "Hell"
+                                |> .operations
+
+                        expectedResult =
+                            [ Insert "bob" [ 14, 11 ] 'l'
+                            , Insert "bob" [ 14, 10 ] 'l'
+                            , Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 14 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "adds multiple characters to a sub-sub-register at the end if the parent register is already full" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ Insert "bob" [ 14, 14 ] 'l'
+                                , Insert "bob" [ 14, 10 ] 'l'
+                                , Insert "bob" [ 1 ] 'H'
+                                , Insert "bob" [ 14 ] 'e'
+                                ]
+                            }
+                                |> CRDT.update "bob" "Hello"
+                                |> .operations
+
+                        expectedResult =
+                            [ Insert "bob" [ 14, 14, 10 ] 'o'
+                            , Insert "bob" [ 14, 14 ] 'l'
+                            , Insert "bob" [ 14, 10 ] 'l'
+                            , Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 14 ] 'e'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
