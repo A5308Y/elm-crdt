@@ -159,30 +159,39 @@ pathBefore path crdt =
 
 
 choosePathBetween : Random.Seed -> Path -> Path -> ( Path, Random.Seed )
-choosePathBetween seed minPath supremumPath =
-    case minPath of
-        minNumber :: restMinPath ->
+choosePathBetween seed infimumPath supremumPath =
+    case infimumPath of
+        infimumHead :: infimumTail ->
             case supremumPath of
-                supremumNumber :: restSupremumPath ->
-                    if minNumber + 1 == supremumNumber then
-                        if List.isEmpty restMinPath then
-                            newSubregister seed minPath
-
-                        else
-                            choosePathBetween seed restMinPath restSupremumPath
+                supremumHead :: supremumTail ->
+                    if infimumHead + 1 >= supremumHead then
+                        let
+                            ( path, nextSeed ) =
+                                choosePathBetween seed infimumTail supremumTail
+                        in
+                        ( infimumHead :: path, nextSeed )
 
                     else
-                        let
-                            ( number, nextSeed ) =
-                                Random.step (Random.int (minNumber + 1) supremumNumber) seed
-                        in
-                        ( List.map ((+) number) minPath, nextSeed )
+                        nextBetweenStep seed infimumHead supremumHead
 
                 [] ->
-                    Debug.todo "Implement Choice for nested paths (inner)"
+                    nextBetweenStep seed infimumHead crdtRegisterMaximum
 
         [] ->
-            Debug.todo "Implement Choice for nested paths (outer)"
+            case supremumPath of
+                supremumHead :: supremumTail ->
+                    nextBetweenStep seed crdtRegisterMinimum supremumHead
+
+                [] ->
+                    nextBetweenStep seed crdtRegisterMinimum crdtRegisterMaximum
+
+
+nextBetweenStep seed infimum supremum =
+    let
+        ( randomInt, nextSeed ) =
+            Random.step (Random.int infimum supremum) seed
+    in
+    ( [ randomInt ], nextSeed )
 
 
 newSubregister : Random.Seed -> Path -> ( Path, Random.Seed )
@@ -230,6 +239,11 @@ pathAtTheEndOf crdt =
 crdtRegisterMaximum : Int
 crdtRegisterMaximum =
     15
+
+
+crdtRegisterMinimum : Int
+crdtRegisterMinimum =
+    1
 
 
 
