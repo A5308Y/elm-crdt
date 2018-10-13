@@ -80,6 +80,7 @@ removedAndRemovals operations operation =
 toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
     crdt.operations
+        |> List.filter (removedAndRemovals crdt.operations)
         |> List.sortBy pathFromOperation
         |> List.map charWithPath
 
@@ -117,7 +118,6 @@ pathFromOperation operation =
 update : UserId -> String -> CRDT -> CRDT
 update userId updatedString crdt =
     if String.length updatedString > List.length (toCharsWithPath crdt) then
-        -- This could also be replace though...
         addCharsToCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
 
     else
@@ -144,19 +144,21 @@ addCharsToCRDT initialString charsToAdd charPathList crdt =
 
 
 removeCharsFromCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
-removeCharsFromCRDT initialString charsToAdd charPathList crdt =
+removeCharsFromCRDT initialString charsToKeep charPathList crdt =
     case charPathList of
         ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
-            case charsToAdd of
-                currentCharToAdd :: restCharsToAdd ->
-                    if currentCharToAdd == currentCharWithPath then
-                        removeCharsFromCRDT initialString restCharsToAdd restCharsWithPath crdt
+            case charsToKeep of
+                currentCharToKeep :: restCharsToKeep ->
+                    if currentCharToKeep == currentCharWithPath then
+                        removeCharsFromCRDT initialString restCharsToKeep restCharsWithPath crdt
 
                     else
                         { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
+                            |> update "bob" initialString
 
                 [] ->
                     { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
+                        |> update "bob" initialString
 
         [] ->
             crdt

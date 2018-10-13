@@ -38,8 +38,6 @@ view model =
             strong [] [ text "Out of Sync!" ]
         , h2 [] [ text "CRDT" ]
         , input [ onInput UpdateCRDT, value (CRDT.toString model.crdt) ] []
-        , div [] [ text (CRDT.toString model.crdt) ]
-        , div [] (List.map (\operation -> div [] [ text (Debug.toString operation) ]) model.crdt.operations)
         , br [] []
         ]
 

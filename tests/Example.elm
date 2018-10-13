@@ -319,5 +319,28 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
+            , test "removes multiple characters at the end of the string" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ Insert "bob" [ 1 ] 'H'
+                                , Insert "bob" [ 13 ] 'i'
+                                , Insert "bob" [ 14 ] 'r'
+                                ]
+                            }
+                                |> CRDT.update "bob" "H"
+                                |> .operations
+
+                        expectedResult =
+                            [ Remove "bob" [ 14 ]
+                            , Remove "bob" [ 13 ]
+                            , Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 13 ] 'i'
+                            , Insert "bob" [ 14 ] 'r'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             ]
         ]
