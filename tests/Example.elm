@@ -35,6 +35,19 @@ suite =
                             }
                     in
                     Expect.equal (CRDT.toString crdt) "Hi"
+            , test "removes characters that are marked as removed" <|
+                \_ ->
+                    let
+                        crdt =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ Insert "bob" [ 7 ] 'i'
+                                , Insert "bob" [ 1 ] 'H'
+                                , Remove "bob" [ 7 ]
+                                ]
+                            }
+                    in
+                    Expect.equal (CRDT.toString crdt) "H"
             , todo "constructs a to be resolved string if different users edited the same position"
 
             --, test "constructs a to be resolved string if different users edited the same position" <|
@@ -283,6 +296,26 @@ suite =
                             , Insert "bob" [ 14, 10 ] 'l'
                             , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 14 ] 'e'
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "removes a single character at the end of the string" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ Insert "bob" [ 1 ] 'H'
+                                , Insert "bob" [ 14 ] 'r'
+                                ]
+                            }
+                                |> CRDT.update "bob" "H"
+                                |> .operations
+
+                        expectedResult =
+                            [ Remove "bob" [ 14 ]
+                            , Insert "bob" [ 1 ] 'H'
+                            , Insert "bob" [ 14 ] 'r'
                             ]
                     in
                     Expect.equal calculatedResult expectedResult

@@ -10,6 +10,7 @@ type alias CRDT =
 
 type Operation
     = Insert UserId Path Char
+    | Remove UserId Path
 
 
 type alias UserId =
@@ -60,9 +61,20 @@ helloWorld =
 toString : CRDT -> String
 toString crdt =
     crdt.operations
+        |> List.filter (removedAndRemovals crdt.operations)
         |> List.sortBy pathFromOperation
         |> List.map displayInsert
         |> String.concat
+
+
+removedAndRemovals operations operation =
+    case operation of
+        Remove _ _ ->
+            False
+
+        Insert _ path _ ->
+            List.member (Remove "bob" path) operations
+                |> not
 
 
 toCharsWithPath : CRDT -> List ( Char, Path )
@@ -78,6 +90,9 @@ charWithPath operation =
         Insert _ path char ->
             ( char, path )
 
+        Remove _ path ->
+            ( '∅', path )
+
 
 displayInsert : Operation -> String
 displayInsert operation =
@@ -85,11 +100,17 @@ displayInsert operation =
         Insert _ _ char ->
             String.fromChar char
 
+        Remove _ _ ->
+            "∅"
+
 
 pathFromOperation : Operation -> Path
 pathFromOperation operation =
     case operation of
         Insert _ path _ ->
+            path
+
+        Remove _ path ->
             path
 
 
@@ -100,7 +121,7 @@ update userId updatedString crdt =
         addCharsToCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
 
     else
-        crdt
+        removeCharsFromCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
 
 
 addCharsToCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
@@ -117,6 +138,25 @@ addCharsToCRDT initialString charsToAdd charPathList crdt =
 
                 [] ->
                     update "bob" initialString (addCharAtEnd currentCharToAdd crdt)
+
+        [] ->
+            crdt
+
+
+removeCharsFromCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
+removeCharsFromCRDT initialString charsToAdd charPathList crdt =
+    case charPathList of
+        ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
+            case charsToAdd of
+                currentCharToAdd :: restCharsToAdd ->
+                    if currentCharToAdd == currentCharWithPath then
+                        removeCharsFromCRDT initialString restCharsToAdd restCharsWithPath crdt
+
+                    else
+                        { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
+
+                [] ->
+                    { crdt | operations = Remove "bob" currentPath :: crdt.operations, seed = crdt.seed }
 
         [] ->
             crdt
@@ -148,6 +188,9 @@ crdtUntil supremumPath crdt =
                 (\operation ->
                     case operation of
                         Insert _ path _ ->
+                            path < supremumPath
+
+                        Remove _ path ->
                             path < supremumPath
                 )
                 crdt.operations
