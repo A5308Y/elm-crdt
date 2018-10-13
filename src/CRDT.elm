@@ -281,18 +281,7 @@ crdtRegisterMinimum =
 
 
 
---if String.length updatedString >  then
---    List.foldl
---List.foldl (String.toList updatedString) (CRDT.toCharsWithPath crdt)
---Fold starting with 0 setting the resulting path to the last compared, stopping when different
--- [('H', ('H', [1])), 'E', ('E', [3])]
 --insert a character one after the other and be certain that the same seed is used so that the same operations are created again.
---Does not work. Scenario: alice and bob share "Hello". Alice edits "Hello" to say "Hi". Shares the result. Bob updates and everythin is removed again.
+--Does not work. Scenario: alice and bob share "Hello". Alice edits "Hello" to say "Hi". Shares the result. Bob updates and everything is removed again.
 --I can't use CRDT.toString crdt because it might not be a valid string because multiple users might have added conflicting inserts
 -- It might actually be alright as long as the CRDT version has different characters
---if String.length updatedString > String.length () then
---    String.startsWith updatedString CRDT.toString crdt
---1. For each character in the updatedString compare if the result of the crdt starts with the updatedString up to this character
---1.1. If True go to the next character
---1.2. If False save the position of the last Insert of the crdt that matched the updatedString as the start for alloc
---2. reverse the string and repeat one but use it to determine the end of the alloc instead of the start
