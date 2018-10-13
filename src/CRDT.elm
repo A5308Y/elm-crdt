@@ -1,10 +1,11 @@
 module CRDT exposing (CRDT, Operation(..), demo, toString, update)
 
 import Array
+import Random
 
 
 type alias CRDT =
-    List Operation
+    { operations : List Operation, seed : Random.Seed }
 
 
 type Operation
@@ -25,23 +26,26 @@ type alias Path =
 
 demo : CRDT
 demo =
-    [ Insert "bob" [ 1 ] 'H'
-    , Insert "bob" [ 2 ] 'E'
-    , Insert "bob" [ 6 ] ' '
-    , Insert "bob" [ 3 ] 'L'
-    , Insert "bob" [ 10 ] 'R'
-    , Insert "bob" [ 4 ] 'L'
-    , Insert "bob" [ 8 ] 'O'
-    , Insert "bob" [ 5 ] 'O'
-    , Insert "bob" [ 7 ] 'W'
-    , Insert "bob" [ 11 ] 'L'
-    , Insert "bob" [ 13 ] 'D'
-    ]
+    { operations =
+        [ Insert "bob" [ 1 ] 'H'
+        , Insert "bob" [ 2 ] 'E'
+        , Insert "bob" [ 6 ] ' '
+        , Insert "bob" [ 3 ] 'L'
+        , Insert "bob" [ 10 ] 'R'
+        , Insert "bob" [ 4 ] 'L'
+        , Insert "bob" [ 8 ] 'O'
+        , Insert "bob" [ 5 ] 'O'
+        , Insert "bob" [ 7 ] 'W'
+        , Insert "bob" [ 11 ] 'L'
+        , Insert "bob" [ 13 ] 'D'
+        ]
+    , seed = Random.initialSeed 42
+    }
 
 
 toString : CRDT -> String
 toString crdt =
-    crdt
+    crdt.operations
         |> List.sortBy pathFromOperation
         |> List.map displayInsert
         |> String.concat
@@ -49,7 +53,7 @@ toString crdt =
 
 toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
-    crdt
+    crdt.operations
         |> List.sortBy pathFromOperation
         |> List.map charWithPath
 
@@ -106,31 +110,43 @@ addCharsToCRDT initialString charsToAdd charPathList crdt =
 
 addCharBefore : Path -> Char -> CRDT -> CRDT
 addCharBefore path char crdt =
-    Insert "bob" (pathBefore path crdt) char :: crdt
+    let
+        ( newPath, newSeed ) =
+            pathBefore path crdt
+    in
+    { crdt | operations = Insert "bob" newPath char :: crdt.operations, seed = newSeed }
 
 
 addCharAtEnd : Char -> CRDT -> CRDT
 addCharAtEnd char crdt =
-    Insert "bob" (pathAfter crdt) char :: crdt
+    let
+        ( newPath, newSeed ) =
+            pathAfter crdt
+    in
+    { crdt | operations = Insert "bob" newPath char :: crdt.operations, seed = newSeed }
 
 
 crdtUntil : Path -> CRDT -> CRDT
 crdtUntil supremumPath crdt =
-    List.filter
-        (\operation ->
-            case operation of
-                Insert _ path _ ->
-                    path < supremumPath
-        )
-        crdt
+    let
+        filteredOperations =
+            List.filter
+                (\operation ->
+                    case operation of
+                        Insert _ path _ ->
+                            path < supremumPath
+                )
+                crdt.operations
+    in
+    { crdt | operations = filteredOperations, seed = crdt.seed }
 
 
-pathAfter : CRDT -> Path
+pathAfter : CRDT -> ( Path, Random.Seed )
 pathAfter crdt =
-    incrementPath (pathAtTheEndOf crdt)
+    ( incrementPath (pathAtTheEndOf crdt), crdt.seed )
 
 
-pathBefore : Path -> CRDT -> Path
+pathBefore : Path -> CRDT -> ( Path, Random.Seed )
 pathBefore path crdt =
     let
         supremumPath =
@@ -139,41 +155,48 @@ pathBefore path crdt =
         minPath =
             pathAtTheEndOf (crdtUntil supremumPath crdt)
     in
-    if isSpaceBetween minPath supremumPath then
-        choosePathBetween minPath supremumPath
-
-    else
-        newSubregister minPath
+    choosePathBetween crdt.seed minPath supremumPath
 
 
-isSpaceBetween : Path -> Path -> Bool
-isSpaceBetween minPath supremumPath =
+choosePathBetween : Random.Seed -> Path -> Path -> ( Path, Random.Seed )
+choosePathBetween seed minPath supremumPath =
     case minPath of
-        [ minNumber ] ->
+        minNumber :: restMinPath ->
             case supremumPath of
-                [ supremumNumber ] ->
-                    minNumber + 1 < supremumNumber
+                supremumNumber :: restSupremumPath ->
+                    if minNumber + 1 == supremumNumber then
+                        if List.isEmpty restMinPath then
+                            newSubregister seed minPath
 
-                _ ->
-                    False
+                        else
+                            choosePathBetween seed restMinPath restSupremumPath
 
-        _ ->
-            False
+                    else
+                        let
+                            ( number, nextSeed ) =
+                                Random.step (Random.int (minNumber + 1) supremumNumber) seed
+                        in
+                        ( List.map ((+) number) minPath, nextSeed )
+
+                [] ->
+                    Debug.todo "Implement Choice for nested paths (inner)"
+
+        [] ->
+            Debug.todo "Implement Choice for nested paths (outer)"
 
 
-choosePathBetween : Path -> Path -> Path
-choosePathBetween minPath supremumPath =
-    List.map ((+) 1) minPath
-
-
-newSubregister : Path -> Path
-newSubregister minPath =
+newSubregister : Random.Seed -> Path -> ( Path, Random.Seed )
+newSubregister seed minPath =
     case minPath of
         [ minNumber ] ->
-            [ minNumber, 0 ]
+            let
+                ( number, nextSeed ) =
+                    Random.step (Random.int minNumber crdtRegisterMaximum) seed
+            in
+            ( [ minNumber, number ], nextSeed )
 
         _ ->
-            minPath
+            ( minPath, seed )
 
 
 incrementPath : Path -> Path
@@ -190,15 +213,15 @@ pathAtTheEndOf : CRDT -> Path
 pathAtTheEndOf crdt =
     let
         maxPath =
-            crdt
+            crdt.operations
                 |> List.sortBy pathFromOperation
                 |> List.reverse
                 |> List.head
                 |> Maybe.map pathFromOperation
                 |> Maybe.withDefault [ 0 ]
     in
-    if maxPath == [ 15 ] then
-        [ 15, 0 ]
+    if maxPath == [ crdtRegisterMaximum ] then
+        [ crdtRegisterMaximum, 0 ]
 
     else
         maxPath
@@ -215,13 +238,6 @@ crdtRegisterMaximum =
 --List.foldl (String.toList updatedString) (CRDT.toCharsWithPath crdt)
 --Fold starting with 0 setting the resulting path to the last compared, stopping when different
 -- [('H', ('H', [1])), 'E', ('E', [3])]
-
-
-seed =
-    Array.fromList [ 0, 1, 2, 3, 4, 5, 6, 8, 10, 11, 13 ]
-
-
-
 --insert a character one after the other and be certain that the same seed is used so that the same operations are created again.
 --Does not work. Scenario: alice and bob share "Hello". Alice edits "Hello" to say "Hi". Shares the result. Bob updates and everythin is removed again.
 --I can't use CRDT.toString crdt because it might not be a valid string because multiple users might have added conflicting inserts

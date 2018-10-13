@@ -31,6 +31,7 @@ view model =
         [ h2 [] [ text "CRDT" ]
         , input [ onInput UpdateCRDT, value (CRDT.toString model.crdt) ] []
         , div [] [ text (CRDT.toString model.crdt) ]
+        , div [] [ text (Debug.toString model.crdt) ]
         , h2 [] [ text "control" ]
         , input [ onInput UpdateCRDT, value model.control ] []
         , div [] [ text model.control ]
