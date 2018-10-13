@@ -189,7 +189,7 @@ choosePathBetween seed infimumPath supremumPath =
 nextBetweenStep seed infimum supremum =
     let
         ( randomInt, nextSeed ) =
-            Random.step (Random.int infimum supremum) seed
+            Random.step (Random.int (infimum + 1) (supremum - 1)) seed
     in
     ( [ randomInt ], nextSeed )
 

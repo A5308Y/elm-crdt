@@ -145,7 +145,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 12 ] 'a'
+                            [ Insert "bob" [ 0, 10 ] 'a'
                             , Insert "bob" [ 0 ] 'K'
                             , Insert "bob" [ 1 ] 'n'
                             ]
@@ -169,7 +169,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 12 ] 'a'
+                            [ Insert "bob" [ 0, 10 ] 'a'
                             , Insert "bob" [ 0 ] 'K'
                             , Insert "bob" [ 1 ] 'n'
                             , Insert "bob" [ 5 ] 'g'
@@ -213,7 +213,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 12 ] 'A'
+                            [ Insert "bob" [ 0, 10 ] 'A'
                             , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
@@ -233,8 +233,8 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ Insert "bob" [ 0, 6 ] 'B'
-                            , Insert "bob" [ 0, 12 ] 'A'
+                            [ Insert "bob" [ 0, 11 ] 'B'
+                            , Insert "bob" [ 0, 10 ] 'A'
                             , Insert "bob" [ 1 ] 'H'
                             , Insert "bob" [ 15 ] 'e'
                             ]
