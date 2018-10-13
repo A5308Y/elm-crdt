@@ -217,16 +217,12 @@ nextBetweenStep seed infimum supremum =
 
 pathAtTheEndOf : CRDT -> Path
 pathAtTheEndOf crdt =
-    let
-        maxPath =
-            crdt.operations
-                |> List.sortBy pathFromOperation
-                |> List.reverse
-                |> List.head
-                |> Maybe.map pathFromOperation
-                |> Maybe.withDefault [ 0 ]
-    in
-    maxPath
+    crdt.operations
+        |> List.sortBy pathFromOperation
+        |> List.reverse
+        |> List.head
+        |> Maybe.map pathFromOperation
+        |> Maybe.withDefault [ 0 ]
 
 
 crdtRegisterMaximum : Int
