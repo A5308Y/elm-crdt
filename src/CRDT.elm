@@ -60,45 +60,38 @@ helloWorld =
 toString : CRDT -> String
 toString crdt =
     crdt.operations
-        |> List.filter (removeTombs crdt.operations)
+        |> List.filter removeTombs
         |> List.sortBy pathFromOperation
         |> List.map displayInsert
-        |> String.concat
+        |> String.fromList
 
 
-removeTombs operations operation =
-    case operation of
-        Insert _ _ _ isTomb ->
-            not isTomb
+removeTombs : Operation -> Bool
+removeTombs (Insert _ _ _ isTomb) =
+    not isTomb
 
 
 toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
     crdt.operations
-        |> List.filter (removeTombs crdt.operations)
+        |> List.filter removeTombs
         |> List.sortBy pathFromOperation
         |> List.map charWithPath
 
 
 charWithPath : Operation -> ( Char, Path )
-charWithPath operation =
-    case operation of
-        Insert _ path char _ ->
-            ( char, path )
+charWithPath (Insert _ path char _) =
+    ( char, path )
 
 
-displayInsert : Operation -> String
-displayInsert operation =
-    case operation of
-        Insert _ _ char _ ->
-            String.fromChar char
+displayInsert : Operation -> Char
+displayInsert (Insert _ _ char _) =
+    char
 
 
 pathFromOperation : Operation -> Path
-pathFromOperation operation =
-    case operation of
-        Insert _ path _ _ ->
-            path
+pathFromOperation (Insert _ path _ _) =
+    path
 
 
 update : UserId -> String -> CRDT -> CRDT
