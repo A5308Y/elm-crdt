@@ -29,6 +29,7 @@ demo =
     abc
 
 
+abc : CRDT
 abc =
     { operations =
         [ { userId = "bob", path = [ 1 ], char = 'A', isTomb = False }
@@ -39,6 +40,7 @@ abc =
     }
 
 
+helloWorld : CRDT
 helloWorld =
     { operations =
         [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
@@ -241,6 +243,7 @@ choosePathBetween seed infimumPath supremumPath =
                     nextBetweenStep seed crdtRegisterMinimum crdtRegisterMaximum
 
 
+nextBetweenStep : Random.Seed -> Int -> Int -> ( Path, Random.Seed )
 nextBetweenStep seed infimum supremum =
     let
         ( randomInt, nextSeed ) =
