@@ -32,10 +32,18 @@ view model =
         , input [ onInput UpdateCRDT, value model.control ] []
         , div [] [ text model.control ]
         , if CRDT.toString model.crdt == model.control then
-            strong [] [ text "Result matches!" ]
+            strong []
+                [ text "Result matches! (Length: "
+                , text (String.fromInt (List.length model.crdt.operations))
+                , text ")"
+                ]
 
           else
-            strong [] [ text "Out of Sync!" ]
+            strong []
+                [ text "Out of Sync! (Length: "
+                , text (String.fromInt (List.length model.crdt.operations))
+                , text ")"
+                ]
         , h2 [] [ text "CRDT" ]
         , input [ onInput UpdateCRDT, value (CRDT.toString model.crdt) ] []
         , br [] []
