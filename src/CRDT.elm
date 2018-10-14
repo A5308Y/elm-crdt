@@ -1,4 +1,4 @@
-module CRDT exposing (CRDT, Operation(..), demo, toString, update)
+module CRDT exposing (CRDT, demo, toString, update)
 
 import Array
 import Random
@@ -8,8 +8,8 @@ type alias CRDT =
     { operations : List Operation, seed : Random.Seed }
 
 
-type Operation
-    = Insert UserId Path Char Bool
+type alias Operation =
+    { userId : UserId, path : Path, char : Char, isTomb : Bool }
 
 
 type alias UserId =
@@ -31,9 +31,9 @@ demo =
 
 abc =
     { operations =
-        [ Insert "bob" [ 1 ] 'A' False
-        , Insert "bob" [ 2 ] 'B' False
-        , Insert "bob" [ 6 ] 'C' False
+        [ { userId = "bob", path = [ 1 ], char = 'A', isTomb = False }
+        , { userId = "bob", path = [ 2 ], char = 'B', isTomb = False }
+        , { userId = "bob", path = [ 6 ], char = 'C', isTomb = False }
         ]
     , seed = Random.initialSeed 42
     }
@@ -41,17 +41,17 @@ abc =
 
 helloWorld =
     { operations =
-        [ Insert "bob" [ 1 ] 'H' False
-        , Insert "bob" [ 2 ] 'E' False
-        , Insert "bob" [ 6 ] ' ' False
-        , Insert "bob" [ 3 ] 'L' False
-        , Insert "bob" [ 10 ] 'R' False
-        , Insert "bob" [ 4 ] 'L' False
-        , Insert "bob" [ 8 ] 'O' False
-        , Insert "bob" [ 5 ] 'O' False
-        , Insert "bob" [ 7 ] 'W' False
-        , Insert "bob" [ 11 ] 'L' False
-        , Insert "bob" [ 13 ] 'D' False
+        [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+        , { userId = "bob", path = [ 2 ], char = 'E', isTomb = False }
+        , { userId = "bob", path = [ 6 ], char = ' ', isTomb = False }
+        , { userId = "bob", path = [ 3 ], char = 'L', isTomb = False }
+        , { userId = "bob", path = [ 10 ], char = 'R', isTomb = False }
+        , { userId = "bob", path = [ 4 ], char = 'L', isTomb = False }
+        , { userId = "bob", path = [ 8 ], char = 'O', isTomb = False }
+        , { userId = "bob", path = [ 5 ], char = 'O', isTomb = False }
+        , { userId = "bob", path = [ 7 ], char = 'W', isTomb = False }
+        , { userId = "bob", path = [ 11 ], char = 'L', isTomb = False }
+        , { userId = "bob", path = [ 13 ], char = 'D', isTomb = False }
         ]
     , seed = Random.initialSeed 42
     }
@@ -60,38 +60,18 @@ helloWorld =
 toString : CRDT -> String
 toString crdt =
     crdt.operations
-        |> List.filter removeTombs
-        |> List.sortBy pathFromOperation
-        |> List.map displayInsert
+        |> List.filter (not << .isTomb)
+        |> List.sortBy .path
+        |> List.map .char
         |> String.fromList
-
-
-removeTombs : Operation -> Bool
-removeTombs (Insert _ _ _ isTomb) =
-    not isTomb
 
 
 toCharsWithPath : CRDT -> List ( Char, Path )
 toCharsWithPath crdt =
     crdt.operations
-        |> List.filter removeTombs
-        |> List.sortBy pathFromOperation
-        |> List.map charWithPath
-
-
-charWithPath : Operation -> ( Char, Path )
-charWithPath (Insert _ path char _) =
-    ( char, path )
-
-
-displayInsert : Operation -> Char
-displayInsert (Insert _ _ char _) =
-    char
-
-
-pathFromOperation : Operation -> Path
-pathFromOperation (Insert _ path _ _) =
-    path
+        |> List.filter (not << .isTomb)
+        |> List.sortBy .path
+        |> List.map (\operation -> ( operation.char, operation.path ))
 
 
 update : UserId -> String -> CRDT -> CRDT
@@ -151,12 +131,12 @@ markAsTomb targetPath crdt =
         Nothing ->
             crdt
 
-        Just ( index, Insert userId path char _ ) ->
+        Just ( index, operation ) ->
             let
                 updatedOperations =
                     crdt.operations
                         |> Array.fromList
-                        |> Array.set index (Insert userId path char True)
+                        |> Array.set index { operation | isTomb = True }
                         |> Array.toList
             in
             { crdt | operations = updatedOperations, seed = crdt.seed }
@@ -172,8 +152,8 @@ findOperation path crdt =
 
 
 pathFilter : Path -> ( Int, Operation ) -> Bool
-pathFilter queriedPath ( index, Insert _ path _ _ ) =
-    queriedPath == path
+pathFilter queriedPath ( index, operation ) =
+    queriedPath == operation.path
 
 
 addCharBefore : Path -> Char -> CRDT -> CRDT
@@ -182,7 +162,10 @@ addCharBefore path char crdt =
         ( newPath, newSeed ) =
             pathBefore path crdt
     in
-    { crdt | operations = Insert "bob" newPath char False :: crdt.operations, seed = newSeed }
+    { crdt
+        | operations = { userId = "bob", path = newPath, char = char, isTomb = False } :: crdt.operations
+        , seed = newSeed
+    }
 
 
 addCharAtEnd : Char -> CRDT -> CRDT
@@ -191,20 +174,17 @@ addCharAtEnd char crdt =
         ( newPath, newSeed ) =
             pathAfter crdt
     in
-    { crdt | operations = Insert "bob" newPath char False :: crdt.operations, seed = newSeed }
+    { crdt
+        | operations = { userId = "bob", path = newPath, char = char, isTomb = False } :: crdt.operations
+        , seed = newSeed
+    }
 
 
 crdtUntil : Path -> CRDT -> CRDT
 crdtUntil supremumPath crdt =
     let
         filteredOperations =
-            List.filter
-                (\operation ->
-                    case operation of
-                        Insert _ path _ _ ->
-                            path < supremumPath
-                )
-                crdt.operations
+            List.filter (\operation -> operation.path < supremumPath) crdt.operations
     in
     { crdt | operations = filteredOperations, seed = crdt.seed }
 
@@ -272,10 +252,10 @@ nextBetweenStep seed infimum supremum =
 pathAtTheEndOf : CRDT -> Path
 pathAtTheEndOf crdt =
     crdt.operations
-        |> List.sortBy pathFromOperation
+        |> List.sortBy .path
         |> List.reverse
         |> List.head
-        |> Maybe.map pathFromOperation
+        |> Maybe.map .path
         |> Maybe.withDefault [ 0 ]
 
 
