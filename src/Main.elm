@@ -54,15 +54,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateCRDT updatedString ->
-            let
-                boundedString =
-                    if String.length updatedString > 500 then
-                        String.slice 0 500 updatedString
-
-                    else
-                        updatedString
-            in
             { model
-                | crdt = CRDT.update "bob" boundedString model.crdt
-                , control = boundedString
+                | crdt = CRDT.update "bob" updatedString model.crdt
+                , control = updatedString
             }

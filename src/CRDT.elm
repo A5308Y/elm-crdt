@@ -20,10 +20,6 @@ type alias Path =
     List Int
 
 
-
---Can't be a set because Insert is not comparable.
-
-
 demo : CRDT
 demo =
     abc
@@ -78,141 +74,77 @@ toCharsWithPath crdt =
 
 update : UserId -> String -> CRDT -> CRDT
 update userId updatedString crdt =
-    if String.length updatedString > List.length (toCharsWithPath crdt) then
-        addCharsToCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
+    let
+        charsWithPaths =
+            toCharsWithPath crdt
+
+        charList =
+            String.toList updatedString
+
+        ( infimumPath, charsAfterInfimum, unmatchedCharsWithPaths ) =
+            findLastMatchingPath charList charsWithPaths [ 0 ]
+
+        ( supremumPath, charsBetween, stillUnmatchedCharsWithPaths ) =
+            findLastMatchingPath (List.reverse charsAfterInfimum) (List.reverse unmatchedCharsWithPaths) [ 15 ]
+    in
+    crdt
+        |> markBetweenAsTomb infimumPath supremumPath
+        |> insertCharsBetween infimumPath supremumPath (List.reverse charsBetween)
+
+
+findLastMatchingPath : List Char -> List ( Char, Path ) -> Path -> ( Path, List Char, List ( Char, Path ) )
+findLastMatchingPath chars charsWithPaths currentPath =
+    case charsWithPaths of
+        ( charFromCRDT, path ) :: restCharsWithPath ->
+            case chars of
+                charFromString :: restCharsFromString ->
+                    if charFromCRDT == charFromString then
+                        findLastMatchingPath restCharsFromString restCharsWithPath path
+
+                    else
+                        ( currentPath, chars, charsWithPaths )
+
+                [] ->
+                    ( currentPath, chars, restCharsWithPath )
+
+        [] ->
+            ( currentPath, chars, [] )
+
+
+markBetweenAsTomb : Path -> Path -> CRDT -> CRDT
+markBetweenAsTomb infimumPath supremumPath givenCrdt =
+    { givenCrdt
+        | operations = List.map (markOperationAsTomb infimumPath supremumPath) givenCrdt.operations
+    }
+
+
+markOperationAsTomb infimumPath supremumPath operation =
+    if operation.path > infimumPath && operation.path < supremumPath then
+        { operation | isTomb = True }
 
     else
-        removeCharsFromCRDT updatedString (String.toList updatedString) (toCharsWithPath crdt) crdt
+        operation
 
 
-addCharsToCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
-addCharsToCRDT initialString charsToAdd charPathList crdt =
-    case charsToAdd of
-        currentCharToAdd :: restCharsToAdd ->
-            case charPathList of
-                ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
-                    if currentCharToAdd == currentCharWithPath then
-                        addCharsToCRDT initialString restCharsToAdd restCharsWithPath crdt
-
-                    else
-                        update "bob" initialString (addCharBefore currentPath currentCharToAdd crdt)
-
-                [] ->
-                    update "bob" initialString (addCharAtEnd currentCharToAdd crdt)
-
-        [] ->
-            crdt
-
-
-removeCharsFromCRDT : String -> List Char -> List ( Char, Path ) -> CRDT -> CRDT
-removeCharsFromCRDT initialString charsToKeep charPathList crdt =
-    case charPathList of
-        ( currentCharWithPath, currentPath ) :: restCharsWithPath ->
-            case charsToKeep of
-                currentCharToKeep :: restCharsToKeep ->
-                    if currentCharToKeep == currentCharWithPath then
-                        removeCharsFromCRDT initialString restCharsToKeep restCharsWithPath crdt
-
-                    else
-                        crdt
-                            |> markAsTomb currentPath
-                            |> update "bob" initialString
-
-                [] ->
-                    crdt
-                        |> markAsTomb currentPath
-                        |> update "bob" initialString
-
-        [] ->
-            crdt
-
-
-markAsTomb : Path -> CRDT -> CRDT
-markAsTomb targetPath crdt =
-    case findOperation targetPath crdt of
-        Nothing ->
-            crdt
-
-        Just ( index, operation ) ->
+insertCharsBetween : Path -> Path -> List Char -> CRDT -> CRDT
+insertCharsBetween infimumPath supremumPath chars crdt =
+    let
+        ( chosenPath, newSeed ) =
+            choosePathBetween crdt.seed infimumPath supremumPath
+    in
+    case chars of
+        char :: restChars ->
             let
-                updatedOperations =
-                    crdt.operations
-                        |> Array.fromList
-                        |> Array.set index { operation | isTomb = True }
-                        |> Array.toList
+                newOperation =
+                    { userId = "bob", path = chosenPath, char = char, isTomb = False }
+
+                updatedCRDT =
+                    { crdt | operations = newOperation :: crdt.operations }
             in
-            { crdt | operations = updatedOperations, seed = crdt.seed }
+            insertCharsBetween chosenPath supremumPath restChars updatedCRDT
 
-
-findOperation : Path -> CRDT -> Maybe ( Int, Operation )
-findOperation path crdt =
-    crdt.operations
-        |> Array.fromList
-        |> Array.indexedMap (\index operation -> ( index, operation ))
-        |> Array.filter (pathFilter path)
-        |> Array.get 0
-
-
-pathFilter : Path -> ( Int, Operation ) -> Bool
-pathFilter queriedPath ( index, operation ) =
-    queriedPath == operation.path
-
-
-addCharBefore : Path -> Char -> CRDT -> CRDT
-addCharBefore path char crdt =
-    let
-        ( newPath, newSeed ) =
-            pathBefore path crdt
-    in
-    { crdt
-        | operations = { userId = "bob", path = newPath, char = char, isTomb = False } :: crdt.operations
-        , seed = newSeed
-    }
-
-
-addCharAtEnd : Char -> CRDT -> CRDT
-addCharAtEnd char crdt =
-    let
-        ( newPath, newSeed ) =
-            pathAfter crdt
-    in
-    { crdt
-        | operations = { userId = "bob", path = newPath, char = char, isTomb = False } :: crdt.operations
-        , seed = newSeed
-    }
-
-
-crdtUntil : Path -> CRDT -> CRDT
-crdtUntil supremumPath crdt =
-    let
-        filteredOperations =
-            List.filter (\operation -> operation.path < supremumPath) crdt.operations
-    in
-    { crdt | operations = filteredOperations, seed = crdt.seed }
-
-
-pathAfter : CRDT -> ( Path, Random.Seed )
-pathAfter crdt =
-    let
-        supremumPath =
-            [ crdtRegisterMaximum ]
-
-        infimumPath =
-            pathAtTheEndOf (crdtUntil supremumPath crdt)
-    in
-    choosePathBetween crdt.seed infimumPath supremumPath
-
-
-pathBefore : Path -> CRDT -> ( Path, Random.Seed )
-pathBefore path crdt =
-    let
-        supremumPath =
-            path
-
-        infimumPath =
-            pathAtTheEndOf (crdtUntil supremumPath crdt)
-    in
-    choosePathBetween crdt.seed infimumPath supremumPath
+        [] ->
+            crdt
 
 
 choosePathBetween : Random.Seed -> Path -> Path -> ( Path, Random.Seed )
@@ -250,16 +182,6 @@ nextBetweenStep seed infimum supremum =
             Random.step (Random.int (infimum + 1) (supremum - 1)) seed
     in
     ( [ randomInt ], nextSeed )
-
-
-pathAtTheEndOf : CRDT -> Path
-pathAtTheEndOf crdt =
-    crdt.operations
-        |> List.sortBy .path
-        |> List.reverse
-        |> List.head
-        |> Maybe.map .path
-        |> Maybe.withDefault [ 0 ]
 
 
 crdtRegisterMaximum : Int

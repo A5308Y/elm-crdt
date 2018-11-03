@@ -117,7 +117,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 11 ], char = 'l', isTomb = False }
+                            [ { userId = "bob", path = [ 12 ], char = 'l', isTomb = False }
                             , { userId = "bob", path = [ 10 ], char = 'l', isTomb = False }
                             , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = [ 7 ], char = 'e', isTomb = False }
@@ -212,6 +212,24 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
+            , test "adds the same character at the end if it gets repeated" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.update "bob" "HH"
+                                |> .operations
+
+                        expectedResult =
+                            [ { userId = "bob", path = [ 10 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
             , test "adds characters to a sub-register in front if the parent register is already full" <|
                 \_ ->
                     let
@@ -246,7 +264,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 0, 11 ], char = 'B', isTomb = False }
+                            [ { userId = "bob", path = [ 0, 12 ], char = 'B', isTomb = False }
                             , { userId = "bob", path = [ 0, 10 ], char = 'A', isTomb = False }
                             , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
@@ -267,7 +285,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 14, 11 ], char = 'l', isTomb = False }
+                            [ { userId = "bob", path = [ 14, 12 ], char = 'l', isTomb = False }
                             , { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
                             , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
