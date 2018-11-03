@@ -1,6 +1,7 @@
 module Example exposing (suite)
 
 import CRDT
+import CRDTPath
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Random
@@ -17,8 +18,8 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 7 ], char = 'i', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
                                 ]
                             }
                     in
@@ -29,8 +30,8 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 7 ], char = 'i', isTomb = False }
-                                , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 ]
                             }
                     in
@@ -41,42 +42,45 @@ suite =
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 7 ], char = 'i', isTomb = True }
-                                , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = True }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 ]
                             }
                     in
                     Expect.equal (CRDT.toString crdt) "H"
             , todo "constructs a to be resolved string if different users edited the same position"
 
-            --, test "constructs a to be resolved string if different users edited the same position" <|
-            --    \_ ->
-            --        let
-            --            crdt =
-            --                {seed = Random.initialSeed 42, operations = [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-            --                , { userId = "bob", path = [ 7 ], char = 'i', isTomb = False }
-            --                , { userId = "alice", path = [ 0 ], char = 'H', isTomb = False }
-            --                , { userId = "alice", path = [ 7 ], char = 'o', isTomb = False }
+            --<|
+            --\_ ->
+            --    let
+            --        crdt =
+            --            { seed = Random.initialSeed 42
+            --            , operations =
+            --                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+            --                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
+            --                , { userId = "alice", path = CRDTPath.demoPath [ 0 ], char = 'H', isTomb = False }
+            --                , { userId = "alice", path = CRDTPath.demoPath [ 7 ], char = 'o', isTomb = False }
             --                ]
-            --        in
-            --        Expect.equal (CRDT.toString crdt) "Hi"
+            --            }
+            --    in
+            --    Expect.equal (CRDT.toString crdt) "Hi"
             , test "constructs the correct string from a list of many operations even if the order is not correct" <|
                 \_ ->
                     let
                         crdt =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 7 ], char = 'W', isTomb = False }
-                                , { userId = "bob", path = [ 11 ], char = 'L', isTomb = False }
-                                , { userId = "bob", path = [ 10 ], char = 'R', isTomb = False }
-                                , { userId = "bob", path = [ 4 ], char = 'L', isTomb = False }
-                                , { userId = "bob", path = [ 5 ], char = 'O', isTomb = False }
-                                , { userId = "bob", path = [ 3 ], char = 'L', isTomb = False }
-                                , { userId = "bob", path = [ 2 ], char = 'E', isTomb = False }
-                                , { userId = "bob", path = [ 6 ], char = ' ', isTomb = False }
-                                , { userId = "bob", path = [ 8 ], char = 'O', isTomb = False }
-                                , { userId = "bob", path = [ 13 ], char = 'D', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'W', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 11 ], char = 'L', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 10 ], char = 'R', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 4 ], char = 'L', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 5 ], char = 'O', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 3 ], char = 'L', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 2 ], char = 'E', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = ' ', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'O', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 13 ], char = 'D', isTomb = False }
                                 ]
                             }
                     in
@@ -89,17 +93,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 7 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 7 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -109,18 +113,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 7 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hell"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 12 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 7 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 11 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -130,17 +134,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 14, 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -150,17 +154,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 0 ], char = 'K', isTomb = False }
-                                , { userId = "bob", path = [ 1 ], char = 'n', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 0 ], char = 'K', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'n', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Kan"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 0, 10 ], char = 'a', isTomb = False }
-                            , { userId = "bob", path = [ 0 ], char = 'K', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'n', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 0, 10 ], char = 'a', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 0 ], char = 'K', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'n', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -170,25 +174,25 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 0 ], char = 'K', isTomb = False }
-                                , { userId = "bob", path = [ 1 ], char = 'n', isTomb = False }
-                                , { userId = "bob", path = [ 5 ], char = 'g', isTomb = False }
-                                , { userId = "bob", path = [ 11 ], char = 'u', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'r', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'u', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 0 ], char = 'K', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'n', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 5 ], char = 'g', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 11 ], char = 'u', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'u', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Kanguru"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 0, 10 ], char = 'a', isTomb = False }
-                            , { userId = "bob", path = [ 0 ], char = 'K', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'n', isTomb = False }
-                            , { userId = "bob", path = [ 5 ], char = 'g', isTomb = False }
-                            , { userId = "bob", path = [ 11 ], char = 'u', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'r', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'u', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 0, 10 ], char = 'a', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 0 ], char = 'K', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'n', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 5 ], char = 'g', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 11 ], char = 'u', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'u', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -198,17 +202,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hel"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 14, 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -218,15 +222,15 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "HH"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 10 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 10 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -236,17 +240,17 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "AHe"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 0, 10 ], char = 'A', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 0, 10 ], char = 'A', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -256,18 +260,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "ABHe"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 0, 12 ], char = 'B', isTomb = False }
-                            , { userId = "bob", path = [ 0, 10 ], char = 'A', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 0, 11 ], char = 'B', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 0, 10 ], char = 'A', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -277,18 +281,18 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hell"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 14, 12 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 14, 11 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14, 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -298,21 +302,21 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 14, 14 ], char = 'l', isTomb = False }
-                                , { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
-                                , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 14, 14 ], char = 'l', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14, 10 ], char = 'l', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "Hello"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 14, 14, 10 ], char = 'o', isTomb = False }
-                            , { userId = "bob", path = [ 14, 14 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 14, 10 ], char = 'l', isTomb = False }
-                            , { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 14, 14, 10 ], char = 'o', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14, 14 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14, 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -322,16 +326,16 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'r', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "H"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 14 ], char = 'r', isTomb = True }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = True }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
@@ -341,18 +345,40 @@ suite =
                         calculatedResult =
                             { seed = Random.initialSeed 42
                             , operations =
-                                [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                                , { userId = "bob", path = [ 13 ], char = 'i', isTomb = False }
-                                , { userId = "bob", path = [ 14 ], char = 'r', isTomb = False }
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 13 ], char = 'i', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = False }
                                 ]
                             }
                                 |> CRDT.update "bob" "H"
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = [ 1 ], char = 'H', isTomb = False }
-                            , { userId = "bob", path = [ 13 ], char = 'i', isTomb = True }
-                            , { userId = "bob", path = [ 14 ], char = 'r', isTomb = True }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 13 ], char = 'i', isTomb = True }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 14 ], char = 'r', isTomb = True }
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "it does not allow to override paths" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'l', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.update "bob" "Hel"
+                                |> .operations
+
+                        expectedResult =
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 7, 5 ], char = 'e', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'l', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult

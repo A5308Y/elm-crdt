@@ -2,22 +2,24 @@ module Main exposing (main)
 
 import Browser
 import CRDT exposing (CRDT)
-import Html exposing (Html, br, div, h2, input, strong, text)
+import CRDTPath
+import Html exposing (Html, br, button, div, h2, input, p, strong, text)
 import Html.Attributes exposing (value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 
 
 type Msg
     = UpdateCRDT String
+    | ToggleCRDTRendering
 
 
 type alias Model =
-    { crdt : CRDT, control : String }
+    { crdt : CRDT, control : String, renderCRDT : Bool }
 
 
 init : Model
 init =
-    { crdt = CRDT.demo, control = CRDT.toString CRDT.demo }
+    { crdt = CRDT.demo, control = CRDT.toString CRDT.demo, renderCRDT = True }
 
 
 main : Program () Model Msg
@@ -47,6 +49,16 @@ view model =
         , h2 [] [ text "CRDT" ]
         , input [ onInput UpdateCRDT, value (CRDT.toString model.crdt) ] []
         , br [] []
+        , button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
+        , if model.renderCRDT then
+            div []
+                (List.map
+                    (\operation -> div [] [ text (Debug.toString operation) ])
+                    (List.sortBy (.path >> CRDTPath.sortOrder) model.crdt.operations)
+                )
+
+          else
+            text ""
         ]
 
 
@@ -58,3 +70,6 @@ update msg model =
                 | crdt = CRDT.update "bob" updatedString model.crdt
                 , control = updatedString
             }
+
+        ToggleCRDTRendering ->
+            { model | renderCRDT = False }
