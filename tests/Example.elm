@@ -375,7 +375,7 @@ suite =
                                 |> .operations
 
                         expectedResult =
-                            [ { userId = "bob", path = CRDTPath.demoPath [ 7, 5 ], char = 'e', isTomb = False }
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 7, 10 ], char = 'e', isTomb = False }
                             , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
                             , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'l', isTomb = False }

@@ -116,8 +116,14 @@ markOperationAsTomb infimumPath supremumPath operation =
 insertCharsBetween : CRDTPath -> CRDTPath -> List Char -> CRDT -> CRDT
 insertCharsBetween infimumPath supremumPath chars crdt =
     let
+        tombAdjustedInfimum =
+            crdt.operations
+                |> List.filter .isTomb
+                |> List.map .path
+                |> CRDTPath.findPathExcluding infimumPath supremumPath
+
         ( chosenPath, newSeed ) =
-            CRDTPath.choosePathBetween crdt.seed infimumPath supremumPath
+            CRDTPath.choosePathBetween crdt.seed tombAdjustedInfimum supremumPath
     in
     case chars of
         char :: restChars ->

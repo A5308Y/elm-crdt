@@ -4,6 +4,7 @@ module CRDTPath exposing
     , absoluteSupremum
     , choosePathBetween
     , demoPath
+    , findPathExcluding
     , isBetween
     , sortOrder
     )
@@ -85,3 +86,31 @@ nextBetweenStep seed infimum supremum =
             Random.step (Random.int (infimum + 1) (supremum - 1)) seed
     in
     ( CRDTPath [ randomInt ], nextSeed )
+
+
+increment : CRDTPath -> CRDTPath -> CRDTPath
+increment (CRDTPath path) (CRDTPath supremumPath) =
+    case path of
+        position :: rest ->
+            case supremumPath of
+                supremumPosition :: supremumRest ->
+                    if position + 1 < supremumPosition then
+                        CRDTPath ((position + 1) :: rest)
+
+                    else
+                        CRDTPath (List.append path [ 5 ])
+
+                [] ->
+                    CRDTPath path
+
+        [] ->
+            CRDTPath path
+
+
+findPathExcluding : CRDTPath -> CRDTPath -> List CRDTPath -> CRDTPath
+findPathExcluding infimumPath supremumPath excludedPaths =
+    if List.member (increment infimumPath supremumPath) excludedPaths then
+        findPathExcluding (increment infimumPath supremumPath) supremumPath excludedPaths
+
+    else
+        infimumPath
