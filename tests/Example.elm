@@ -48,22 +48,6 @@ suite =
                             }
                     in
                     Expect.equal (CRDT.toString crdt) "H"
-            , todo "constructs a to be resolved string if different users edited the same position"
-
-            --<|
-            --\_ ->
-            --    let
-            --        crdt =
-            --            { seed = Random.initialSeed 42
-            --            , operations =
-            --                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-            --                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
-            --                , { userId = "alice", path = CRDTPath.demoPath [ 0 ], char = 'H', isTomb = False }
-            --                , { userId = "alice", path = CRDTPath.demoPath [ 7 ], char = 'o', isTomb = False }
-            --                ]
-            --            }
-            --    in
-            --    Expect.equal (CRDT.toString crdt) "Hi"
             , test "constructs the correct string from a list of many operations even if the order is not correct" <|
                 \_ ->
                     let
@@ -379,6 +363,26 @@ suite =
                             , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
                             , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'l', isTomb = False }
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "handles multi-user updates correctly" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.update "alice" "Hel"
+                                |> .operations
+
+                        expectedResult =
+                            [ { userId = "alice", path = CRDTPath.demoPath [ 10 ], char = 'l', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult

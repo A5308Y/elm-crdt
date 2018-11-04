@@ -75,7 +75,7 @@ update userId updatedString crdt =
     in
     crdt
         |> markBetweenAsTomb infimumPath supremumPath
-        |> insertCharsBetween infimumPath supremumPath (List.reverse charsBetween)
+        |> insertCharsBetween userId infimumPath supremumPath (List.reverse charsBetween)
 
 
 findLastMatchingPath : List Char -> List ( Char, CRDTPath ) -> CRDTPath -> ( CRDTPath, List Char, List ( Char, CRDTPath ) )
@@ -113,8 +113,8 @@ markOperationAsTomb infimumPath supremumPath operation =
         operation
 
 
-insertCharsBetween : CRDTPath -> CRDTPath -> List Char -> CRDT -> CRDT
-insertCharsBetween infimumPath supremumPath chars crdt =
+insertCharsBetween : UserId -> CRDTPath -> CRDTPath -> List Char -> CRDT -> CRDT
+insertCharsBetween userId infimumPath supremumPath chars crdt =
     let
         tombAdjustedInfimum =
             crdt.operations
@@ -129,12 +129,12 @@ insertCharsBetween infimumPath supremumPath chars crdt =
         char :: restChars ->
             let
                 newOperation =
-                    { userId = "bob", path = chosenPath, char = char, isTomb = False }
+                    { userId = userId, path = chosenPath, char = char, isTomb = False }
 
                 updatedCRDT =
                     { crdt | operations = newOperation :: crdt.operations, seed = newSeed }
             in
-            insertCharsBetween chosenPath supremumPath restChars updatedCRDT
+            insertCharsBetween userId chosenPath supremumPath restChars updatedCRDT
 
         [] ->
             crdt
