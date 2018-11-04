@@ -129,7 +129,7 @@ insertCharsBetween userId infimumPath supremumPath chars crdt =
         char :: restChars ->
             let
                 newOperation =
-                    { userId = userId, path = chosenPath, char = char, isTomb = False }
+                    Operation userId chosenPath char False
 
                 updatedCRDT =
                     { crdt | operations = newOperation :: crdt.operations, seed = newSeed }
@@ -138,8 +138,3 @@ insertCharsBetween userId infimumPath supremumPath chars crdt =
 
         [] ->
             crdt
-
-
-
--- I can't use CRDT.toString crdt because it might not be a valid string because multiple users might have added conflicting inserts
--- It might actually be alright as long as the CRDT version has different characters
