@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import CRDT exposing (CRDT, ResolvedCRDT)
 import CRDTPath
-import Html exposing (Html, br, button, div, h2, input, p, strong, text)
+import Html exposing (Html, br, button, div, h2, input, li, p, strong, text, ul)
 import Html.Attributes exposing (value)
 import Html.Events exposing (onClick, onInput)
 
@@ -23,7 +23,11 @@ type alias UserId =
 
 init : Model
 init =
-    { crdt = CRDT.demo, control = CRDT.demoAsString, renderCRDT = True }
+    let
+        ( crdt, initialControl ) =
+            CRDT.conflictDemo
+    in
+    Model crdt initialControl True
 
 
 main : Program () Model Msg
@@ -35,24 +39,42 @@ view : Model -> Html Msg
 view model =
     case CRDT.resolve model.crdt of
         Err error ->
-            text error
+            div []
+                [ text "There are conflicting edits. The following users have created the following versions: "
+                , ul [] (List.map (usersVersion model.crdt) (CRDT.users model.crdt))
+                ]
 
         Ok resolvedCRDT ->
             div []
                 [ control model resolvedCRDT
                 , crdtInput "bob" resolvedCRDT
                 , crdtInput "alice" resolvedCRDT
-                , button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
-                , if model.renderCRDT then
-                    div []
-                        (List.map
-                            (\operation -> div [] [ text (Debug.toString operation) ])
-                            (List.sortBy (.path >> CRDTPath.sortOrder) model.crdt.operations)
-                        )
-
-                  else
-                    text ""
+                , debugOutput model
                 ]
+
+
+usersVersion crdt userId =
+    case CRDT.resolveFor userId crdt of
+        Ok resolvedCRDT ->
+            li [] [ text (userId ++ " (" ++ CRDT.toString resolvedCRDT ++ ")") ]
+
+        Err message ->
+            li [] [ text message ]
+
+
+debugOutput model =
+    div []
+        [ button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
+        , if model.renderCRDT then
+            div []
+                (List.map
+                    (\operation -> div [] [ text (Debug.toString operation) ])
+                    (List.sortBy (.path >> CRDTPath.sortOrder) model.crdt.operations)
+                )
+
+          else
+            text ""
+        ]
 
 
 crdtInput : UserId -> ResolvedCRDT -> Html Msg

@@ -125,18 +125,4 @@ findPathExcluding infimumPath supremumPath excludedPaths =
 
 allDifferent : List CRDTPath -> Bool
 allDifferent paths =
-    List.length paths == List.length (uniqueHelp Set.empty (List.map values paths) [])
-
-
-uniqueHelp : Set comparable -> List comparable -> List comparable -> List comparable
-uniqueHelp existing remaining accumulator =
-    case remaining of
-        [] ->
-            List.reverse accumulator
-
-        first :: rest ->
-            if Set.member first existing then
-                uniqueHelp existing rest accumulator
-
-            else
-                uniqueHelp (Set.insert first existing) rest (first :: accumulator)
+    List.length paths == Set.size (Set.fromList (List.map values paths))

@@ -1,20 +1,23 @@
 module CRDT exposing
     ( CRDT
     , ResolvedCRDT
+    , conflictDemo
     , demo
-    , demoAsString
     , empty
     , emptyResolved
     , isResolved
     , length
     , resolve
+    , resolveFor
     , toString
     , update
+    , users
     )
 
 import Array
 import CRDTPath exposing (CRDTPath)
 import Random
+import Set
 
 
 type ResolvedCRDT
@@ -43,14 +46,28 @@ emptyResolved =
     ResolvedCRDT (CRDT [] (Random.initialSeed 0))
 
 
-demo : CRDT
+demo : ( CRDT, String )
 demo =
-    helloWorld
+    ( helloWorld, "HELLO WORLD" )
 
 
-demoAsString : String
-demoAsString =
-    "HELLO WORLD"
+conflictDemo : ( CRDT, String )
+conflictDemo =
+    ( conflict, "" )
+
+
+conflict : CRDT
+conflict =
+    { operations =
+        [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+        , { userId = "bob", path = CRDTPath.demoPath [ 4 ], char = 'E', isTomb = False }
+        , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
+        , { userId = "alice", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+        , { userId = "alice", path = CRDTPath.demoPath [ 4 ], char = 'A', isTomb = False }
+        , { userId = "alice", path = CRDTPath.demoPath [ 8 ], char = 'L', isTomb = False }
+        ]
+    , seed = Random.initialSeed 42
+    }
 
 
 helloWorld : CRDT
@@ -70,6 +87,11 @@ helloWorld =
         ]
     , seed = Random.initialSeed 42
     }
+
+
+resolveFor : UserId -> CRDT -> Result String ResolvedCRDT
+resolveFor userId crdt =
+    resolve { crdt | operations = List.filter (\operation -> operation.userId == userId) crdt.operations }
 
 
 resolve : CRDT -> Result String ResolvedCRDT
@@ -191,3 +213,11 @@ isResolved crdt =
 length : ResolvedCRDT -> Int
 length (ResolvedCRDT crdt) =
     List.length crdt.operations
+
+
+users : CRDT -> List UserId
+users crdt =
+    crdt.operations
+        |> List.map (\operation -> operation.userId)
+        |> Set.fromList
+        |> Set.toList
