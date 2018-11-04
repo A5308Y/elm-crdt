@@ -4733,103 +4733,14 @@ var author$project$CRDT$findLastMatchingPath = F3(
 			}
 		}
 	});
-var elm$core$Basics$lt = _Utils_lt;
-var elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
-		}
-	});
-var author$project$CRDTPath$increment = F2(
-	function (_n0, _n1) {
-		var path = _n0.a;
-		var supremumPath = _n1.a;
-		if (path.b) {
-			var position = path.a;
-			var rest = path.b;
-			if (supremumPath.b) {
-				var supremumPosition = supremumPath.a;
-				var supremumRest = supremumPath.b;
-				return (_Utils_cmp(position + 1, supremumPosition) < 0) ? author$project$CRDTPath$CRDTPath(
-					A2(elm$core$List$cons, position + 1, rest)) : author$project$CRDTPath$CRDTPath(
-					A2(
-						elm$core$List$append,
-						path,
-						_List_fromArray(
-							[5])));
-			} else {
-				return author$project$CRDTPath$CRDTPath(path);
-			}
-		} else {
-			return author$project$CRDTPath$CRDTPath(path);
-		}
-	});
-var elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var elm$core$List$member = F2(
-	function (x, xs) {
-		return A2(
-			elm$core$List$any,
-			function (a) {
-				return _Utils_eq(a, x);
-			},
-			xs);
-	});
-var author$project$CRDT$findNonTombPath = F3(
-	function (infimumPath, supremumPath, crdt) {
-		findNonTombPath:
-		while (true) {
-			var tombPaths = A2(
-				elm$core$List$map,
-				function ($) {
-					return $.path;
-				},
-				A2(
-					elm$core$List$filter,
-					function ($) {
-						return $.isTomb;
-					},
-					crdt.operations));
-			if (A2(
-				elm$core$List$member,
-				A2(author$project$CRDTPath$increment, infimumPath, supremumPath),
-				tombPaths)) {
-				var $temp$infimumPath = A2(author$project$CRDTPath$increment, infimumPath, supremumPath),
-					$temp$supremumPath = supremumPath,
-					$temp$crdt = crdt;
-				infimumPath = $temp$infimumPath;
-				supremumPath = $temp$supremumPath;
-				crdt = $temp$crdt;
-				continue findNonTombPath;
-			} else {
-				return infimumPath;
-			}
-		}
+var author$project$CRDT$Operation = F4(
+	function (userId, path, _char, isTomb) {
+		return {_char: _char, isTomb: isTomb, path: path, userId: userId};
 	});
 var author$project$CRDTPath$crdtRegisterMaximum = 15;
 var author$project$CRDTPath$crdtRegisterMinimum = 0;
 var elm$core$Basics$sub = _Basics_sub;
+var elm$core$Basics$lt = _Utils_lt;
 var elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -4945,28 +4856,126 @@ var author$project$CRDTPath$choosePathBetween = F3(
 			}
 		}
 	});
-var author$project$CRDT$insertCharsBetween = F4(
-	function (infimumPath, supremumPath, chars, crdt) {
+var elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
+		}
+	});
+var author$project$CRDTPath$increment = F2(
+	function (_n0, _n1) {
+		var path = _n0.a;
+		var supremumPath = _n1.a;
+		if (path.b) {
+			var position = path.a;
+			var rest = path.b;
+			if (supremumPath.b) {
+				var supremumPosition = supremumPath.a;
+				var supremumRest = supremumPath.b;
+				return (_Utils_cmp(position + 1, supremumPosition) < 0) ? author$project$CRDTPath$CRDTPath(
+					A2(elm$core$List$cons, position + 1, rest)) : author$project$CRDTPath$CRDTPath(
+					A2(
+						elm$core$List$append,
+						path,
+						_List_fromArray(
+							[1])));
+			} else {
+				return author$project$CRDTPath$CRDTPath(path);
+			}
+		} else {
+			return author$project$CRDTPath$CRDTPath(path);
+		}
+	});
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
+var author$project$CRDTPath$findPathExcluding = F3(
+	function (infimumPath, supremumPath, excludedPaths) {
+		findPathExcluding:
+		while (true) {
+			if (A2(
+				elm$core$List$member,
+				A2(author$project$CRDTPath$increment, infimumPath, supremumPath),
+				excludedPaths)) {
+				var $temp$infimumPath = A2(author$project$CRDTPath$increment, infimumPath, supremumPath),
+					$temp$supremumPath = supremumPath,
+					$temp$excludedPaths = excludedPaths;
+				infimumPath = $temp$infimumPath;
+				supremumPath = $temp$supremumPath;
+				excludedPaths = $temp$excludedPaths;
+				continue findPathExcluding;
+			} else {
+				return infimumPath;
+			}
+		}
+	});
+var author$project$CRDT$insertCharsBetween = F5(
+	function (userId, infimumPath, supremumPath, chars, crdt) {
 		insertCharsBetween:
 		while (true) {
-			var tombAdjustedInfimum = A3(author$project$CRDT$findNonTombPath, infimumPath, supremumPath, crdt);
+			var tombAdjustedInfimum = A3(
+				author$project$CRDTPath$findPathExcluding,
+				infimumPath,
+				supremumPath,
+				A2(
+					elm$core$List$map,
+					function ($) {
+						return $.path;
+					},
+					A2(
+						elm$core$List$filter,
+						function ($) {
+							return $.isTomb;
+						},
+						crdt.operations)));
 			var _n0 = A3(author$project$CRDTPath$choosePathBetween, crdt.seed, tombAdjustedInfimum, supremumPath);
 			var chosenPath = _n0.a;
 			var newSeed = _n0.b;
 			if (chars.b) {
 				var _char = chars.a;
 				var restChars = chars.b;
-				var newOperation = {_char: _char, isTomb: false, path: chosenPath, userId: 'bob'};
+				var newOperation = A4(author$project$CRDT$Operation, userId, chosenPath, _char, false);
 				var updatedCRDT = _Utils_update(
 					crdt,
 					{
 						operations: A2(elm$core$List$cons, newOperation, crdt.operations),
 						seed: newSeed
 					});
-				var $temp$infimumPath = chosenPath,
+				var $temp$userId = userId,
+					$temp$infimumPath = chosenPath,
 					$temp$supremumPath = supremumPath,
 					$temp$chars = restChars,
 					$temp$crdt = updatedCRDT;
+				userId = $temp$userId;
 				infimumPath = $temp$infimumPath;
 				supremumPath = $temp$supremumPath;
 				chars = $temp$chars;
@@ -5054,8 +5063,9 @@ var author$project$CRDT$update = F3(
 		var supremumPath = _n1.a;
 		var charsBetween = _n1.b;
 		var stillUnmatchedCharsWithPaths = _n1.c;
-		return A4(
+		return A5(
 			author$project$CRDT$insertCharsBetween,
+			userId,
 			infimumPath,
 			supremumPath,
 			elm$core$List$reverse(charsBetween),
@@ -5064,12 +5074,13 @@ var author$project$CRDT$update = F3(
 var author$project$Main$update = F2(
 	function (msg, model) {
 		if (msg.$ === 'UpdateCRDT') {
-			var updatedString = msg.a;
+			var userId = msg.a;
+			var updatedString = msg.b;
 			return _Utils_update(
 				model,
 				{
 					control: updatedString,
-					crdt: A3(author$project$CRDT$update, 'bob', updatedString, model.crdt)
+					crdt: A3(author$project$CRDT$update, userId, updatedString, model.crdt)
 				});
 		} else {
 			return _Utils_update(
@@ -5078,9 +5089,10 @@ var author$project$Main$update = F2(
 		}
 	});
 var author$project$Main$ToggleCRDTRendering = {$: 'ToggleCRDTRendering'};
-var author$project$Main$UpdateCRDT = function (a) {
-	return {$: 'UpdateCRDT', a: a};
-};
+var author$project$Main$UpdateCRDT = F2(
+	function (a, b) {
+		return {$: 'UpdateCRDT', a: a, b: b};
+	});
 var elm$core$Debug$toString = _Debug_toString;
 var elm$core$List$length = function (xs) {
 	return A3(
@@ -5536,7 +5548,8 @@ var author$project$Main$view = function (model) {
 				elm$html$Html$input,
 				_List_fromArray(
 					[
-						elm$html$Html$Events$onInput(author$project$Main$UpdateCRDT),
+						elm$html$Html$Events$onInput(
+						author$project$Main$UpdateCRDT('control')),
 						elm$html$Html$Attributes$value(model.control)
 					]),
 				_List_Nil),
@@ -5575,13 +5588,32 @@ var author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						elm$html$Html$text('CRDT')
+						elm$html$Html$text('Bob\'s CRDT')
 					])),
 				A2(
 				elm$html$Html$input,
 				_List_fromArray(
 					[
-						elm$html$Html$Events$onInput(author$project$Main$UpdateCRDT),
+						elm$html$Html$Events$onInput(
+						author$project$Main$UpdateCRDT('bob')),
+						elm$html$Html$Attributes$value(
+						author$project$CRDT$toString(model.crdt))
+					]),
+				_List_Nil),
+				A2(elm$html$Html$br, _List_Nil, _List_Nil),
+				A2(
+				elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('Alice\'s CRDT')
+					])),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Events$onInput(
+						author$project$Main$UpdateCRDT('alice')),
 						elm$html$Html$Attributes$value(
 						author$project$CRDT$toString(model.crdt))
 					]),

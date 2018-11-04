@@ -9,7 +9,7 @@ import Html.Events exposing (onClick, onInput)
 
 
 type Msg
-    = UpdateCRDT String
+    = UpdateCRDT String String
     | ToggleCRDTRendering
 
 
@@ -31,7 +31,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ h2 [] [ text "control" ]
-        , input [ onInput UpdateCRDT, value model.control ] []
+        , input [ onInput (UpdateCRDT "control"), value model.control ] []
         , div [] [ text model.control ]
         , if CRDT.toString model.crdt == model.control then
             strong []
@@ -46,8 +46,11 @@ view model =
                 , text (String.fromInt (List.length model.crdt.operations))
                 , text ")"
                 ]
-        , h2 [] [ text "CRDT" ]
-        , input [ onInput UpdateCRDT, value (CRDT.toString model.crdt) ] []
+        , h2 [] [ text "Bob's CRDT" ]
+        , input [ onInput (UpdateCRDT "bob"), value (CRDT.toString model.crdt) ] []
+        , br [] []
+        , h2 [] [ text "Alice's CRDT" ]
+        , input [ onInput (UpdateCRDT "alice"), value (CRDT.toString model.crdt) ] []
         , br [] []
         , button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
         , if model.renderCRDT then
@@ -65,9 +68,9 @@ view model =
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateCRDT updatedString ->
+        UpdateCRDT userId updatedString ->
             { model
-                | crdt = CRDT.update "bob" updatedString model.crdt
+                | crdt = CRDT.update userId updatedString model.crdt
                 , control = updatedString
             }
 
