@@ -3,6 +3,8 @@ module CRDT exposing
     , ResolvedCRDT
     , demo
     , demoAsString
+    , empty
+    , emptyResolved
     , isResolved
     , length
     , resolve
@@ -29,6 +31,16 @@ type alias Operation =
 
 type alias UserId =
     String
+
+
+empty : CRDT
+empty =
+    CRDT [] (Random.initialSeed 0)
+
+
+emptyResolved : ResolvedCRDT
+emptyResolved =
+    ResolvedCRDT (CRDT [] (Random.initialSeed 0))
 
 
 demo : CRDT
@@ -176,5 +188,6 @@ isResolved crdt =
         |> CRDTPath.allDifferent
 
 
+length : ResolvedCRDT -> Int
 length (ResolvedCRDT crdt) =
     List.length crdt.operations

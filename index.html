@@ -5226,8 +5226,8 @@ var elm$core$Set$member = F2(
 		var dict = _n0.a;
 		return A2(elm$core$Dict$member, key, dict);
 	});
-var author$project$CRDTPath$uniqueHelp = F4(
-	function (f, existing, remaining, accumulator) {
+var author$project$CRDTPath$uniqueHelp = F3(
+	function (existing, remaining, accumulator) {
 		uniqueHelp:
 		while (true) {
 			if (!remaining.b) {
@@ -5235,23 +5235,18 @@ var author$project$CRDTPath$uniqueHelp = F4(
 			} else {
 				var first = remaining.a;
 				var rest = remaining.b;
-				var computedFirst = f(first);
-				if (A2(elm$core$Set$member, computedFirst, existing)) {
-					var $temp$f = f,
-						$temp$existing = existing,
+				if (A2(elm$core$Set$member, first, existing)) {
+					var $temp$existing = existing,
 						$temp$remaining = rest,
 						$temp$accumulator = accumulator;
-					f = $temp$f;
 					existing = $temp$existing;
 					remaining = $temp$remaining;
 					accumulator = $temp$accumulator;
 					continue uniqueHelp;
 				} else {
-					var $temp$f = f,
-						$temp$existing = A2(elm$core$Set$insert, computedFirst, existing),
+					var $temp$existing = A2(elm$core$Set$insert, first, existing),
 						$temp$remaining = rest,
 						$temp$accumulator = A2(elm$core$List$cons, first, accumulator);
-					f = $temp$f;
 					existing = $temp$existing;
 					remaining = $temp$remaining;
 					accumulator = $temp$accumulator;
@@ -5280,9 +5275,8 @@ var author$project$CRDTPath$allDifferent = function (paths) {
 	return _Utils_eq(
 		elm$core$List$length(paths),
 		elm$core$List$length(
-			A4(
+			A3(
 				author$project$CRDTPath$uniqueHelp,
-				elm$core$Basics$identity,
 				elm$core$Set$empty,
 				A2(elm$core$List$map, author$project$CRDTPath$values, paths),
 				_List_Nil)));

@@ -15,43 +15,49 @@ suite =
             [ test "constructs the correct string from a list of two operations in the correct order" <|
                 \_ ->
                     let
-                        crdt =
+                        resolvedCrdt =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
                                 ]
                             }
+                                |> CRDT.resolve
+                                |> Result.withDefault CRDT.emptyResolved
                     in
-                    Expect.equal (CRDT.toString crdt) "Hi"
+                    Expect.equal (CRDT.toString resolvedCrdt) "Hi"
             , test "constructs the correct string from a list of two operations even if the order is not correct" <|
                 \_ ->
                     let
-                        crdt =
+                        resolvedCrdt =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = False }
                                 , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 ]
                             }
+                                |> CRDT.resolve
+                                |> Result.withDefault CRDT.emptyResolved
                     in
-                    Expect.equal (CRDT.toString crdt) "Hi"
+                    Expect.equal (CRDT.toString resolvedCrdt) "Hi"
             , test "removes characters that are marked as removed" <|
                 \_ ->
                     let
-                        crdt =
+                        resolvedCrdt =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'i', isTomb = True }
                                 , { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
                                 ]
                             }
+                                |> CRDT.resolve
+                                |> Result.withDefault CRDT.emptyResolved
                     in
-                    Expect.equal (CRDT.toString crdt) "H"
+                    Expect.equal (CRDT.toString resolvedCrdt) "H"
             , test "constructs the correct string from a list of many operations even if the order is not correct" <|
                 \_ ->
                     let
-                        crdt =
+                        resolvedCrdt =
                             { seed = Random.initialSeed 42
                             , operations =
                                 [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
@@ -67,8 +73,10 @@ suite =
                                 , { userId = "bob", path = CRDTPath.demoPath [ 13 ], char = 'D', isTomb = False }
                                 ]
                             }
+                                |> CRDT.resolve
+                                |> Result.withDefault CRDT.emptyResolved
                     in
-                    Expect.equal (CRDT.toString crdt) "HELLO WORLD"
+                    Expect.equal (CRDT.toString resolvedCrdt) "HELLO WORLD"
             ]
         , describe "CRDT.update"
             [ test "it adds a character to the end if the updated version differs by one character" <|
