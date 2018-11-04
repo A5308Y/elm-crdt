@@ -98,7 +98,7 @@ increment (CRDTPath path) (CRDTPath supremumPath) =
                         CRDTPath ((position + 1) :: rest)
 
                     else
-                        CRDTPath (List.append path [ 5 ])
+                        CRDTPath (List.append path [ 1 ])
 
                 [] ->
                     CRDTPath path
