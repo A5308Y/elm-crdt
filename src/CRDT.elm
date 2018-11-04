@@ -1,8 +1,22 @@
-module CRDT exposing (CRDT, demo, toString, update)
+module CRDT exposing
+    ( CRDT
+    , ResolvedCRDT
+    , demo
+    , demoAsString
+    , isResolved
+    , length
+    , resolve
+    , toString
+    , update
+    )
 
 import Array
 import CRDTPath exposing (CRDTPath)
 import Random
+
+
+type ResolvedCRDT
+    = ResolvedCRDT CRDT
 
 
 type alias CRDT =
@@ -20,6 +34,11 @@ type alias UserId =
 demo : CRDT
 demo =
     helloWorld
+
+
+demoAsString : String
+demoAsString =
+    "HELLO WORLD"
 
 
 helloWorld : CRDT
@@ -41,8 +60,17 @@ helloWorld =
     }
 
 
-toString : CRDT -> String
-toString crdt =
+resolve : CRDT -> Result String ResolvedCRDT
+resolve crdt =
+    if isResolved crdt then
+        Ok (ResolvedCRDT crdt)
+
+    else
+        Err "Can't resolve crdt"
+
+
+toString : ResolvedCRDT -> String
+toString (ResolvedCRDT crdt) =
     crdt.operations
         |> List.filter (not << .isTomb)
         |> List.sortBy (.path >> CRDTPath.sortOrder)
@@ -138,3 +166,15 @@ insertCharsBetween userId infimumPath supremumPath chars crdt =
 
         [] ->
             crdt
+
+
+isResolved : CRDT -> Bool
+isResolved crdt =
+    crdt.operations
+        |> List.filter (not << .isTomb)
+        |> List.map .path
+        |> CRDTPath.allDifferent
+
+
+length (ResolvedCRDT crdt) =
+    List.length crdt.operations

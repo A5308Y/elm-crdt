@@ -426,4 +426,39 @@ suite =
                     in
                     Expect.equal calculatedResult expectedResult
             ]
+        , describe "isResolved"
+            [ test "returns True if there are no conflicting entries" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.isResolved
+
+                        expectedResult =
+                            True
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "returns False if there are conflicting entries" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                , { userId = "alice", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.isResolved
+
+                        expectedResult =
+                            False
+                    in
+                    Expect.equal calculatedResult expectedResult
+            ]
         ]

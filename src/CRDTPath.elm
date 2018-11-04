@@ -2,6 +2,7 @@ module CRDTPath exposing
     ( CRDTPath
     , absoluteInfimum
     , absoluteSupremum
+    , allDifferent
     , choosePathBetween
     , demoPath
     , findPathExcluding
@@ -10,6 +11,7 @@ module CRDTPath exposing
     )
 
 import Random
+import Set exposing (Set)
 
 
 type CRDTPath
@@ -43,6 +45,11 @@ isBetween (CRDTPath infimumPath) (CRDTPath supremumPath) (CRDTPath path) =
 
 sortOrder : CRDTPath -> List Int
 sortOrder (CRDTPath path) =
+    path
+
+
+values : CRDTPath -> List Int
+values (CRDTPath path) =
     path
 
 
@@ -114,3 +121,26 @@ findPathExcluding infimumPath supremumPath excludedPaths =
 
     else
         infimumPath
+
+
+allDifferent : List CRDTPath -> Bool
+allDifferent paths =
+    List.length paths == List.length (uniqueHelp identity Set.empty (List.map values paths) [])
+
+
+uniqueHelp : (a -> comparable) -> Set comparable -> List a -> List a -> List a
+uniqueHelp f existing remaining accumulator =
+    case remaining of
+        [] ->
+            List.reverse accumulator
+
+        first :: rest ->
+            let
+                computedFirst =
+                    f first
+            in
+            if Set.member computedFirst existing then
+                uniqueHelp f existing rest accumulator
+
+            else
+                uniqueHelp f (Set.insert computedFirst existing) rest (first :: accumulator)
