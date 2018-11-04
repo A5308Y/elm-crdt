@@ -366,7 +366,7 @@ suite =
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
-            , test "handles multi-user updates correctly" <|
+            , test "handles multi-user additions correctly" <|
                 \_ ->
                     let
                         calculatedResult =
@@ -383,6 +383,45 @@ suite =
                             [ { userId = "alice", path = CRDTPath.demoPath [ 10 ], char = 'l', isTomb = False }
                             , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
                             , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "handles multi-user deletions correctly" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.update "alice" ""
+                                |> .operations
+
+                        expectedResult =
+                            [ { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = True }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
+                            ]
+                    in
+                    Expect.equal calculatedResult expectedResult
+            , test "handles multi-user replacements correctly" <|
+                \_ ->
+                    let
+                        calculatedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                                , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+                                |> CRDT.update "alice" "Ha"
+                                |> .operations
+
+                        expectedResult =
+                            [ { userId = "alice", path = CRDTPath.demoPath [ 10 ], char = 'a', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = 'H', isTomb = False }
+                            , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
                             ]
                     in
                     Expect.equal calculatedResult expectedResult
