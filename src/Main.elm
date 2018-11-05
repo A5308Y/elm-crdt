@@ -3,14 +3,15 @@ module Main exposing (main)
 import Browser
 import CRDT exposing (CRDT, ResolvedCRDT)
 import CRDTPath
-import Html exposing (Html, br, button, div, h2, input, li, p, strong, text, ul)
-import Html.Attributes exposing (value)
+import Html exposing (Html, a, br, button, div, h2, input, li, p, strong, text, ul)
+import Html.Attributes exposing (href, value)
 import Html.Events exposing (onClick, onInput)
 
 
 type Msg
     = UpdateCRDT String String
     | ToggleCRDTRendering
+    | ChooseCRDTVersion UserId CRDT
 
 
 type alias Model =
@@ -53,15 +54,20 @@ view model =
                 ]
 
 
+usersVersion : CRDT -> UserId -> Html Msg
 usersVersion crdt userId =
-    case CRDT.resolveFor userId crdt of
+    case CRDT.previewResolutionFor userId crdt of
         Ok resolvedCRDT ->
-            li [] [ text (userId ++ " (" ++ CRDT.toString resolvedCRDT ++ ")") ]
+            li []
+                [ text (userId ++ " (" ++ CRDT.toString resolvedCRDT ++ ")")
+                , a [ href "#", onClick (ChooseCRDTVersion userId crdt) ] [ text "Choose this Version" ]
+                ]
 
         Err message ->
             li [] [ text message ]
 
 
+debugOutput : Model -> Html Msg
 debugOutput model =
     div []
         [ button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
@@ -119,3 +125,18 @@ update msg model =
 
         ToggleCRDTRendering ->
             { model | renderCRDT = False }
+
+        ChooseCRDTVersion userId crdt ->
+            let
+                resolvableCRDT =
+                    CRDT.resolveWithVersionOf userId crdt
+
+                updatedControl =
+                    case CRDT.resolve resolvableCRDT of
+                        Ok resolvedCRDT ->
+                            CRDT.toString resolvedCRDT
+
+                        Err message ->
+                            message
+            in
+            { model | crdt = resolvableCRDT, control = updatedControl }

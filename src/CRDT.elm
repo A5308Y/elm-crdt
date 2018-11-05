@@ -7,8 +7,9 @@ module CRDT exposing
     , emptyResolved
     , isResolved
     , length
+    , previewResolutionFor
     , resolve
-    , resolveFor
+    , resolveWithVersionOf
     , toString
     , update
     , users
@@ -64,7 +65,7 @@ conflict =
         , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
         , { userId = "alice", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
         , { userId = "alice", path = CRDTPath.demoPath [ 4 ], char = 'A', isTomb = False }
-        , { userId = "alice", path = CRDTPath.demoPath [ 8 ], char = 'L', isTomb = False }
+        , { userId = "alice", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
         ]
     , seed = Random.initialSeed 42
     }
@@ -89,9 +90,36 @@ helloWorld =
     }
 
 
-resolveFor : UserId -> CRDT -> Result String ResolvedCRDT
-resolveFor userId crdt =
-    resolve { crdt | operations = List.filter (\operation -> operation.userId == userId) crdt.operations }
+previewResolutionFor : UserId -> CRDT -> Result String ResolvedCRDT
+previewResolutionFor userId crdt =
+    let
+        updatedOperations =
+            List.filter (\operation -> operation.userId == userId) crdt.operations
+    in
+    resolve { crdt | operations = updatedOperations }
+
+
+resolveWithVersionOf : UserId -> CRDT -> CRDT
+resolveWithVersionOf userId crdt =
+    let
+        paths =
+            List.map .path crdt.operations
+
+        duplicatePaths =
+            List.filter
+                (\outerPath -> List.length (List.filter (\innerPath -> innerPath == outerPath) paths) > 1)
+                paths
+    in
+    { crdt | operations = List.map (resolveOperation userId duplicatePaths) crdt.operations }
+
+
+resolveOperation : UserId -> List CRDTPath -> Operation -> Operation
+resolveOperation userId duplicatePaths operation =
+    if List.member operation.path duplicatePaths && operation.userId /= userId && not operation.isTomb then
+        { operation | isTomb = True }
+
+    else
+        operation
 
 
 resolve : CRDT -> Result String ResolvedCRDT
