@@ -6,6 +6,7 @@ module CRDT exposing
     , editors
     , empty
     , emptyResolved
+    , encoder
     , isResolved
     , length
     , previewResolutionFor
@@ -17,6 +18,7 @@ module CRDT exposing
 
 import Array
 import CRDTPath exposing (CRDTPath)
+import Json.Encode
 import Random
 import Set
 import UserId exposing (UserId)
@@ -57,12 +59,12 @@ conflictDemo =
 conflict : CRDT
 conflict =
     { operations =
-        [ { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 4 ], char = 'E', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
-        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 4 ], char = 'A', isTomb = False }
-        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
+        [ Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 1 ]) 'H' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 4 ]) 'E' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 7 ]) 'L' False
+        , Operation (UserId.fromString "alice") (CRDTPath.demoPath [ 1 ]) 'H' False
+        , Operation (UserId.fromString "alice") (CRDTPath.demoPath [ 4 ]) 'A' False
+        , Operation (UserId.fromString "alice") (CRDTPath.demoPath [ 7 ]) 'L' False
         ]
     , seed = Random.initialSeed 42
     }
@@ -71,17 +73,17 @@ conflict =
 helloWorld : CRDT
 helloWorld =
     { operations =
-        [ { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 2 ], char = 'E', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 6 ], char = ' ', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 3 ], char = 'L', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 10 ], char = 'R', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 4 ], char = 'L', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 8 ], char = 'O', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 5 ], char = 'O', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 7 ], char = 'W', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 11 ], char = 'L', isTomb = False }
-        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 13 ], char = 'D', isTomb = False }
+        [ Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 1 ]) 'H' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 2 ]) 'E' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 6 ]) ' ' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 3 ]) 'L' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 10 ]) 'R' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 4 ]) 'L' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 8 ]) 'O' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 5 ]) 'O' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 7 ]) 'W' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 11 ]) 'L' False
+        , Operation (UserId.fromString "bob") (CRDTPath.demoPath [ 13 ]) 'D' False
         ]
     , seed = Random.initialSeed 42
     }
@@ -247,3 +249,25 @@ editors crdt =
         |> Set.fromList
         |> Set.toList
         |> List.map (\string -> UserId.fromString string)
+
+
+encoder : CRDT -> Json.Encode.Value
+encoder crdt =
+    let
+        ( randomInt, nextSeed ) =
+            Random.step (Random.int 0 100) crdt.seed
+    in
+    Json.Encode.object
+        [ ( "operations", Json.Encode.list encodeOperation crdt.operations )
+        , ( "seed", Json.Encode.int randomInt )
+        ]
+
+
+encodeOperation : Operation -> Json.Encode.Value
+encodeOperation operation =
+    Json.Encode.object
+        [ ( "userId", Json.Encode.string <| UserId.toString operation.userId )
+        , ( "path", CRDTPath.encode operation.path )
+        , ( "char", Json.Encode.string <| String.fromChar operation.char )
+        , ( "isTomb", Json.Encode.bool operation.isTomb )
+        ]

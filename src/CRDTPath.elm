@@ -5,11 +5,13 @@ module CRDTPath exposing
     , allDifferent
     , choosePathBetween
     , demoPath
+    , encode
     , findPathExcluding
     , isBetween
     , sortOrder
     )
 
+import Json.Encode
 import Random
 import Set exposing (Set)
 
@@ -126,3 +128,8 @@ findPathExcluding infimumPath supremumPath excludedPaths =
 allDifferent : List CRDTPath -> Bool
 allDifferent paths =
     List.length paths == Set.size (Set.fromList (List.map values paths))
+
+
+encode : CRDTPath -> Json.Encode.Value
+encode (CRDTPath path) =
+    Json.Encode.list Json.Encode.int path

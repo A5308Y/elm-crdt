@@ -6,6 +6,10 @@ import CRDTPath
 import Html exposing (Html, a, br, button, div, h2, input, li, p, strong, text, ul)
 import Html.Attributes exposing (href, value)
 import Html.Events exposing (onClick, onInput)
+import Http
+import Json.Decode
+import Json.Decode.Pipeline
+import Json.Encode
 import UserId exposing (UserId)
 
 
@@ -13,24 +17,30 @@ type Msg
     = UpdateCRDT UserId String
     | ToggleCRDTRendering
     | ChooseCRDTVersion UserId CRDT
+    | RecieveBinConfirmation (Result Http.Error PasteBinResult)
+    | Save
+
+
+type alias PasteBinResult =
+    { uri : String }
 
 
 type alias Model =
     { crdt : CRDT, control : String, renderCRDT : Bool }
 
 
-init : Model
-init =
+init : flags -> ( Model, Cmd Msg )
+init flags =
     let
         ( crdt, initialControl ) =
             CRDT.conflictDemo
     in
-    Model crdt initialControl True
+    ( Model crdt initialControl True, Cmd.none )
 
 
 main : Program () Model Msg
 main =
-    Browser.sandbox { view = view, init = init, update = update }
+    Browser.element { view = view, init = init, update = update, subscriptions = \model -> Sub.none }
 
 
 view : Model -> Html Msg
@@ -48,6 +58,7 @@ view model =
                 , crdtInput (UserId.fromString "bob") resolvedCRDT
                 , crdtInput (UserId.fromString "alice") resolvedCRDT
                 , debugOutput model
+                , button [ onClick Save ] [ text "Save" ]
                 ]
 
 
@@ -111,17 +122,19 @@ control model resolvedCRDT =
         ]
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateCRDT userId updatedString ->
-            { model
+            ( { model
                 | crdt = CRDT.update userId updatedString model.crdt
                 , control = updatedString
-            }
+              }
+            , Cmd.none
+            )
 
         ToggleCRDTRendering ->
-            { model | renderCRDT = False }
+            ( { model | renderCRDT = False }, Cmd.none )
 
         ChooseCRDTVersion userId crdt ->
             let
@@ -136,4 +149,30 @@ update msg model =
                         Err message ->
                             message
             in
-            { model | crdt = resolvableCRDT, control = updatedControl }
+            ( { model | crdt = resolvableCRDT, control = updatedControl }, Cmd.none )
+
+        Save ->
+            ( model, Http.send RecieveBinConfirmation (postToBin (CRDT.encoder model.crdt)) )
+
+        RecieveBinConfirmation result ->
+            let
+                debug =
+                    Debug.log "result" result
+            in
+            ( model, Cmd.none )
+
+
+baseBinUri : String
+baseBinUri =
+    "https://api.myjson.com/bins"
+
+
+postToBin : Json.Encode.Value -> Http.Request PasteBinResult
+postToBin jsonValue =
+    Http.post baseBinUri (Http.jsonBody jsonValue) pasteBinResultDecoder
+
+
+pasteBinResultDecoder : Json.Decode.Decoder PasteBinResult
+pasteBinResultDecoder =
+    Json.Decode.succeed PasteBinResult
+        |> Json.Decode.Pipeline.required "uri" Json.Decode.string
