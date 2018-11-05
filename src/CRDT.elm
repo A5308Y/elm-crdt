@@ -3,6 +3,7 @@ module CRDT exposing
     , ResolvedCRDT
     , conflictDemo
     , demo
+    , editors
     , empty
     , emptyResolved
     , isResolved
@@ -12,13 +13,13 @@ module CRDT exposing
     , resolveWithVersionOf
     , toString
     , update
-    , users
     )
 
 import Array
 import CRDTPath exposing (CRDTPath)
 import Random
 import Set
+import UserId exposing (UserId)
 
 
 type ResolvedCRDT
@@ -31,10 +32,6 @@ type alias CRDT =
 
 type alias Operation =
     { userId : UserId, path : CRDTPath, char : Char, isTomb : Bool }
-
-
-type alias UserId =
-    String
 
 
 empty : CRDT
@@ -60,12 +57,12 @@ conflictDemo =
 conflict : CRDT
 conflict =
     { operations =
-        [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 4 ], char = 'E', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
-        , { userId = "alice", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = "alice", path = CRDTPath.demoPath [ 4 ], char = 'A', isTomb = False }
-        , { userId = "alice", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
+        [ { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 4 ], char = 'E', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
+        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 4 ], char = 'A', isTomb = False }
+        , { userId = UserId.fromString "alice", path = CRDTPath.demoPath [ 7 ], char = 'L', isTomb = False }
         ]
     , seed = Random.initialSeed 42
     }
@@ -74,17 +71,17 @@ conflict =
 helloWorld : CRDT
 helloWorld =
     { operations =
-        [ { userId = "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 2 ], char = 'E', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 6 ], char = ' ', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 3 ], char = 'L', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 10 ], char = 'R', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 4 ], char = 'L', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 8 ], char = 'O', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 5 ], char = 'O', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 7 ], char = 'W', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 11 ], char = 'L', isTomb = False }
-        , { userId = "bob", path = CRDTPath.demoPath [ 13 ], char = 'D', isTomb = False }
+        [ { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 2 ], char = 'E', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 6 ], char = ' ', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 3 ], char = 'L', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 10 ], char = 'R', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 4 ], char = 'L', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 8 ], char = 'O', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 5 ], char = 'O', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 7 ], char = 'W', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 11 ], char = 'L', isTomb = False }
+        , { userId = UserId.fromString "bob", path = CRDTPath.demoPath [ 13 ], char = 'D', isTomb = False }
         ]
     , seed = Random.initialSeed 42
     }
@@ -243,9 +240,10 @@ length (ResolvedCRDT crdt) =
     List.length crdt.operations
 
 
-users : CRDT -> List UserId
-users crdt =
+editors : CRDT -> List UserId
+editors crdt =
     crdt.operations
-        |> List.map (\operation -> operation.userId)
+        |> List.map (\operation -> UserId.toString operation.userId)
         |> Set.fromList
         |> Set.toList
+        |> List.map (\string -> UserId.fromString string)

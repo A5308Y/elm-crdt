@@ -6,20 +6,17 @@ import CRDTPath
 import Html exposing (Html, a, br, button, div, h2, input, li, p, strong, text, ul)
 import Html.Attributes exposing (href, value)
 import Html.Events exposing (onClick, onInput)
+import UserId exposing (UserId)
 
 
 type Msg
-    = UpdateCRDT String String
+    = UpdateCRDT UserId String
     | ToggleCRDTRendering
     | ChooseCRDTVersion UserId CRDT
 
 
 type alias Model =
     { crdt : CRDT, control : String, renderCRDT : Bool }
-
-
-type alias UserId =
-    String
 
 
 init : Model
@@ -42,14 +39,14 @@ view model =
         Err error ->
             div []
                 [ text "There are conflicting edits. The following users have created the following versions: "
-                , ul [] (List.map (usersVersion model.crdt) (CRDT.users model.crdt))
+                , ul [] (List.map (usersVersion model.crdt) (CRDT.editors model.crdt))
                 ]
 
         Ok resolvedCRDT ->
             div []
                 [ control model resolvedCRDT
-                , crdtInput "bob" resolvedCRDT
-                , crdtInput "alice" resolvedCRDT
+                , crdtInput (UserId.fromString "bob") resolvedCRDT
+                , crdtInput (UserId.fromString "alice") resolvedCRDT
                 , debugOutput model
                 ]
 
@@ -59,7 +56,7 @@ usersVersion crdt userId =
     case CRDT.previewResolutionFor userId crdt of
         Ok resolvedCRDT ->
             li []
-                [ text (userId ++ " (" ++ CRDT.toString resolvedCRDT ++ ")")
+                [ text (UserId.toString userId ++ " (" ++ CRDT.toString resolvedCRDT ++ ")")
                 , a [ href "#", onClick (ChooseCRDTVersion userId crdt) ] [ text "Choose this Version" ]
                 ]
 
@@ -86,7 +83,7 @@ debugOutput model =
 crdtInput : UserId -> ResolvedCRDT -> Html Msg
 crdtInput userId resolvedCRDT =
     div []
-        [ h2 [] [ text (userId ++ "'s CRDT") ]
+        [ h2 [] [ text (UserId.toString userId ++ "'s CRDT") ]
         , input [ onInput (UpdateCRDT userId), value (CRDT.toString resolvedCRDT) ] []
         , br [] []
         ]
@@ -96,7 +93,7 @@ control : Model -> ResolvedCRDT -> Html Msg
 control model resolvedCRDT =
     div []
         [ h2 [] [ text "control" ]
-        , input [ onInput (UpdateCRDT "control"), value model.control ] []
+        , input [ onInput (UpdateCRDT (UserId.fromString "control")), value model.control ] []
         , div [] [ text model.control ]
         , if CRDT.toString resolvedCRDT == model.control then
             strong []
