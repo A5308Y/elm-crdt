@@ -18,6 +18,8 @@ module CRDT exposing
 
 import Array
 import CRDTPath exposing (CRDTPath)
+import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 import Random
 import Set
@@ -271,3 +273,33 @@ encodeOperation operation =
         , ( "char", Json.Encode.string <| String.fromChar operation.char )
         , ( "isTomb", Json.Encode.bool operation.isTomb )
         ]
+
+
+operationDecoder : Json.Decode.Decoder Operation
+operationDecoder =
+    Json.Decode.succeed operationConstructor
+        |> Json.Decode.Pipeline.required "userId" Json.Decode.string
+        |> Json.Decode.Pipeline.required "path" (Json.Decode.list Json.Decode.int)
+        |> Json.Decode.Pipeline.required "char" Json.Decode.string
+        |> Json.Decode.Pipeline.required "isTomb" Json.Decode.bool
+
+
+operationConstructor : String -> List Int -> String -> Bool -> Operation
+operationConstructor userIdString intList stringChar isTomb =
+    Operation
+        (UserId.fromString userIdString)
+        (CRDTPath.demoPath intList)
+        (Maybe.withDefault ' ' <| List.head <| String.toList stringChar)
+        isTomb
+
+
+decoder : Json.Decode.Decoder CRDT
+decoder =
+    Json.Decode.succeed crdtConstructor
+        |> Json.Decode.Pipeline.required "operations" (Json.Decode.list operationDecoder)
+        |> Json.Decode.Pipeline.required "seed" Json.Decode.int
+
+
+crdtConstructor : List Operation -> Int -> CRDT
+crdtConstructor operations seedInt =
+    CRDT operations (Random.initialSeed seedInt)
