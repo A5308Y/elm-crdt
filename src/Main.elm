@@ -52,7 +52,7 @@ view model =
         Err error ->
             div []
                 [ text "There are conflicting edits. The following users have created the following versions: "
-                , ul [] (List.map (usersVersion model.crdt) (CRDT.editors model.crdt))
+                , ul [] (List.map (usersVersion model.crdt) (CRDT.editors model.crdt) ++ [ dontDecideOption ])
                 ]
 
         Ok resolvedCRDT ->
@@ -64,6 +64,10 @@ view model =
                 , button [ onClick CreateNew ] [ text "Create New Empty CRDT" ]
                 , button [ onClick TriggerSynchronize ] [ text "Synchronize" ]
                 ]
+
+
+dontDecideOption =
+    li [] [ text "Don't decide and keep working on my version" ]
 
 
 usersVersion : CRDT -> UserId -> Html Msg
@@ -229,7 +233,7 @@ getFromBin =
 
 binId : String
 binId =
-    "eenem"
+    "c57b2"
 
 
 baseBinUri : String
