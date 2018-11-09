@@ -2,13 +2,16 @@ module CRDT exposing
     ( CRDT
     , ResolvedCRDT
     , conflictDemo
+    , decoder
     , demo
     , editors
     , empty
     , emptyResolved
     , encoder
+    , equal
     , isResolved
     , length
+    , merge
     , previewResolutionFor
     , resolve
     , resolveWithVersionOf
@@ -50,7 +53,7 @@ emptyResolved =
 
 demo : ( CRDT, String )
 demo =
-    ( helloWorld, "HELLO WORLD" )
+    ( empty, "" )
 
 
 conflictDemo : ( CRDT, String )
@@ -94,8 +97,23 @@ helloWorld =
 previewResolutionFor : UserId -> CRDT -> Result String ResolvedCRDT
 previewResolutionFor userId crdt =
     let
+        tombs =
+            List.filter
+                .isTomb
+                crdt.operations
+
+        thisUsersNonTombOperations =
+            List.filter
+                (\operation -> not operation.isTomb && operation.userId == userId)
+                crdt.operations
+
+        nonTombOperationsFromOtherUsersWithNewPaths =
+            List.filter
+                (\operation -> not (List.member operation.path (List.map .path thisUsersNonTombOperations)))
+                crdt.operations
+
         updatedOperations =
-            List.filter (\operation -> operation.userId == userId) crdt.operations
+            tombs ++ thisUsersNonTombOperations ++ nonTombOperationsFromOtherUsersWithNewPaths
     in
     resolve { crdt | operations = updatedOperations }
 
@@ -303,3 +321,39 @@ decoder =
 crdtConstructor : List Operation -> Int -> CRDT
 crdtConstructor operations seedInt =
     CRDT operations (Random.initialSeed seedInt)
+
+
+merge : CRDT -> CRDT -> CRDT
+merge leftCrdt rightCrdt =
+    let
+        allOperations =
+            leftCrdt.operations ++ rightCrdt.operations
+
+        updatedOperations =
+            List.foldl uniqueFold [] allOperations
+    in
+    { seed = leftCrdt.seed, operations = updatedOperations }
+
+
+uniqueFold : Operation -> List Operation -> List Operation
+uniqueFold operation acc =
+    if List.member (operationToComparable operation) (List.map operationToComparable acc) then
+        acc
+
+    else
+        operation :: acc
+
+
+operationToComparable : Operation -> ( CRDTPath, UserId )
+operationToComparable operation =
+    ( operation.path, operation.userId )
+
+
+equal : CRDT -> CRDT -> Bool
+equal leftCrdt rightCrdt =
+    List.sortBy operationOrder leftCrdt.operations == List.sortBy operationOrder rightCrdt.operations
+
+
+operationOrder : Operation -> ( List Int, String )
+operationOrder operation =
+    ( CRDTPath.sortOrder operation.path, UserId.toString operation.userId )

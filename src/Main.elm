@@ -17,8 +17,11 @@ type Msg
     = UpdateCRDT UserId String
     | ToggleCRDTRendering
     | ChooseCRDTVersion UserId CRDT
-    | RecieveBinConfirmation (Result Http.Error PasteBinResult)
-    | Save
+    | ReceiveBinConfirmation (Result Http.Error PasteBinResult)
+    | TriggerSynchronize
+    | Synchronize (Result Http.Error CRDT)
+    | ReceiveFromBin (Result Http.Error CRDT)
+    | CreateNew
 
 
 type alias PasteBinResult =
@@ -33,9 +36,9 @@ init : flags -> ( Model, Cmd Msg )
 init flags =
     let
         ( crdt, initialControl ) =
-            CRDT.conflictDemo
+            CRDT.demo
     in
-    ( Model crdt initialControl True, Cmd.none )
+    ( Model crdt initialControl True, Http.send Synchronize getFromBin )
 
 
 main : Program () Model Msg
@@ -58,7 +61,8 @@ view model =
                 , crdtInput (UserId.fromString "bob") resolvedCRDT
                 , crdtInput (UserId.fromString "alice") resolvedCRDT
                 , debugOutput model
-                , button [ onClick Save ] [ text "Save" ]
+                , button [ onClick CreateNew ] [ text "Create New Empty CRDT" ]
+                , button [ onClick TriggerSynchronize ] [ text "Synchronize" ]
                 ]
 
 
@@ -72,7 +76,7 @@ usersVersion crdt userId =
                 ]
 
         Err message ->
-            li [] [ text message ]
+            li [] [ text (Debug.toString crdt) ]
 
 
 debugOutput : Model -> Html Msg
@@ -81,9 +85,10 @@ debugOutput model =
         [ button [ onClick ToggleCRDTRendering ] [ text "Disable CRDT rendering (for performance testing)" ]
         , if model.renderCRDT then
             div []
-                (List.map
-                    (\operation -> div [] [ text (Debug.toString operation) ])
-                    (List.sortBy (.path >> CRDTPath.sortOrder) model.crdt.operations)
+                ([ text (Debug.toString model.crdt.seed) ]
+                    ++ List.map
+                        (\operation -> div [] [ text (Debug.toString operation) ])
+                        (List.sortBy (.path >> CRDTPath.sortOrder) model.crdt.operations)
                 )
 
           else
@@ -149,17 +154,82 @@ update msg model =
                         Err message ->
                             message
             in
-            ( { model | crdt = resolvableCRDT, control = updatedControl }, Cmd.none )
+            ( { model | crdt = resolvableCRDT, control = updatedControl }
+            , Http.send ReceiveFromBin (putToBin (CRDT.encoder resolvableCRDT))
+            )
 
-        Save ->
-            ( model, Http.send RecieveBinConfirmation (postToBin (CRDT.encoder model.crdt)) )
+        TriggerSynchronize ->
+            ( model, Http.send Synchronize getFromBin )
 
-        RecieveBinConfirmation result ->
+        CreateNew ->
+            ( { model | crdt = CRDT.empty, control = "" }
+            , Http.send ReceiveBinConfirmation (postToBin (CRDT.encoder CRDT.empty))
+            )
+
+        ReceiveBinConfirmation result ->
             let
                 debug =
                     Debug.log "result" result
             in
             ( model, Cmd.none )
+
+        Synchronize result ->
+            case result of
+                Err message ->
+                    ( { model | control = Debug.toString message }, Cmd.none )
+
+                Ok foreignCrdt ->
+                    let
+                        updatedCRDT =
+                            CRDT.merge foreignCrdt model.crdt
+
+                        updatedControl =
+                            case CRDT.resolve updatedCRDT of
+                                Err message ->
+                                    message
+
+                                Ok resolvedCRDT ->
+                                    CRDT.toString resolvedCRDT
+                    in
+                    ( { model | crdt = updatedCRDT, control = updatedControl }
+                    , if CRDT.equal updatedCRDT foreignCrdt then
+                        Cmd.none
+
+                      else
+                        Http.send ReceiveFromBin (putToBin (CRDT.encoder updatedCRDT))
+                    )
+
+        ReceiveFromBin result ->
+            case result of
+                Err message ->
+                    ( { model | control = Debug.toString message }, Cmd.none )
+
+                Ok foreignCrdt ->
+                    let
+                        updatedCRDT =
+                            CRDT.merge foreignCrdt model.crdt
+
+                        updatedControl =
+                            case CRDT.resolve updatedCRDT of
+                                Err message ->
+                                    message
+
+                                Ok resolvedCRDT ->
+                                    CRDT.toString resolvedCRDT
+                    in
+                    ( { model | crdt = updatedCRDT, control = updatedControl }
+                    , Cmd.none
+                    )
+
+
+getFromBin : Http.Request CRDT
+getFromBin =
+    Http.get ("https://api.myjson.com/bins/" ++ binId) CRDT.decoder
+
+
+binId : String
+binId =
+    "eenem"
 
 
 baseBinUri : String
@@ -170,6 +240,19 @@ baseBinUri =
 postToBin : Json.Encode.Value -> Http.Request PasteBinResult
 postToBin jsonValue =
     Http.post baseBinUri (Http.jsonBody jsonValue) pasteBinResultDecoder
+
+
+putToBin : Json.Encode.Value -> Http.Request CRDT
+putToBin jsonValue =
+    Http.request
+        { method = "PUT"
+        , headers = []
+        , url = "https://api.myjson.com/bins/" ++ binId
+        , body = Http.jsonBody jsonValue
+        , expect = Http.expectJson CRDT.decoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
 
 
 pasteBinResultDecoder : Json.Decode.Decoder PasteBinResult
