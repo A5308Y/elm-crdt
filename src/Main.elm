@@ -22,6 +22,7 @@ type Msg
     | Synchronize (Result Http.Error CRDT)
     | ReceiveFromBin (Result Http.Error CRDT)
     | CreateNew
+    | Impersonate UserId
 
 
 type alias PasteBinResult =
@@ -29,7 +30,7 @@ type alias PasteBinResult =
 
 
 type alias Model =
-    { crdt : CRDT, control : String, renderCRDT : Bool }
+    { crdt : CRDT, control : String, renderCRDT : Bool, impersonatedUser : Maybe UserId }
 
 
 init : flags -> ( Model, Cmd Msg )
@@ -38,7 +39,7 @@ init flags =
         ( crdt, initialControl ) =
             CRDT.demo
     in
-    ( Model crdt initialControl True, Http.send Synchronize getFromBin )
+    ( Model crdt initialControl True Nothing, Http.send Synchronize getFromBin )
 
 
 main : Program () Model Msg
@@ -58,14 +59,26 @@ view model =
         Ok resolvedCRDT ->
             div []
                 [ control model resolvedCRDT
-                , crdtInput (UserId.fromString "bob") resolvedCRDT
-                , crdtInput (UserId.fromString "alice") resolvedCRDT
+                , case model.impersonatedUser of
+                    Nothing ->
+                        div []
+                            [ crdtInput (UserId.fromString "bob") resolvedCRDT
+                            , crdtInput (UserId.fromString "alice") resolvedCRDT
+                            ]
+
+                    Just userId ->
+                        crdtInput userId resolvedCRDT
                 , debugOutput model
                 , button [ onClick CreateNew ] [ text "Create New Empty CRDT" ]
                 , button [ onClick TriggerSynchronize ] [ text "Synchronize" ]
+                , div []
+                    [ button [ onClick (Impersonate (UserId.fromString "alice")) ] [ text "Impersonate Alice" ]
+                    , button [ onClick (Impersonate (UserId.fromString "bob")) ] [ text "Impersonate Bob" ]
+                    ]
                 ]
 
 
+dontDecideOption : Html Msg
 dontDecideOption =
     li [] [ text "Don't decide and keep working on my version" ]
 
@@ -164,6 +177,9 @@ update msg model =
 
         TriggerSynchronize ->
             ( model, Http.send Synchronize getFromBin )
+
+        Impersonate userId ->
+            ( { model | impersonatedUser = Just userId }, Cmd.none )
 
         CreateNew ->
             ( { model | crdt = CRDT.empty, control = "" }
