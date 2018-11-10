@@ -201,7 +201,7 @@ update msg model =
                 Ok foreignCrdt ->
                     let
                         updatedCRDT =
-                            CRDT.merge foreignCrdt model.crdt
+                            CRDT.merge model.crdt foreignCrdt
 
                         updatedControl =
                             case CRDT.resolve updatedCRDT of
@@ -227,7 +227,7 @@ update msg model =
                 Ok foreignCrdt ->
                     let
                         updatedCRDT =
-                            CRDT.merge foreignCrdt model.crdt
+                            CRDT.merge model.crdt foreignCrdt
 
                         updatedControl =
                             case CRDT.resolve updatedCRDT of
@@ -249,7 +249,7 @@ getFromBin =
 
 binId : String
 binId =
-    "c57b2"
+    "1cvgdy"
 
 
 baseBinUri : String

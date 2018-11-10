@@ -329,24 +329,38 @@ merge leftCrdt rightCrdt =
         allOperations =
             leftCrdt.operations ++ rightCrdt.operations
 
+        uniqueTombs =
+            List.filter .isTomb allOperations
+                |> List.foldr uniqueFold []
+
         updatedOperations =
-            List.foldl uniqueFold [] allOperations
+            List.foldr uniqueFold uniqueTombs allOperations
     in
     { seed = leftCrdt.seed, operations = updatedOperations }
 
 
 uniqueFold : Operation -> List Operation -> List Operation
 uniqueFold operation acc =
-    if List.member (operationToComparable operation) (List.map operationToComparable acc) then
+    if operation.isTomb then
+        if List.member (operationToComparable operation) (List.map operationToComparable acc) then
+            acc
+
+        else
+            operation :: acc
+
+    else if
+        List.member (operationToComparable operation) (List.map operationToComparable acc)
+            || List.member (operationToComparable { operation | isTomb = True }) (List.map operationToComparable acc)
+    then
         acc
 
     else
         operation :: acc
 
 
-operationToComparable : Operation -> ( CRDTPath, UserId )
+operationToComparable : Operation -> ( CRDTPath, UserId, Bool )
 operationToComparable operation =
-    ( operation.path, operation.userId )
+    ( operation.path, operation.userId, operation.isTomb )
 
 
 equal : CRDT -> CRDT -> Bool

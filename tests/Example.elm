@@ -470,6 +470,34 @@ suite =
                     in
                     Expect.equal calculatedResult expectedResult
             ]
+        , describe "merge"
+            [ test "prioritizes operations with tombs" <|
+                \_ ->
+                    let
+                        crdtWithoutTomb =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = bob, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = bob, path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+
+                        crdtWithTomb =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = bob, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = bob, path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = True }
+                                ]
+                            }
+
+                        calculatedResult =
+                            CRDT.merge crdtWithTomb crdtWithoutTomb
+
+                        expectedResult =
+                            crdtWithTomb
+                    in
+                    Expect.equal calculatedResult expectedResult
+            ]
         ]
 
 
