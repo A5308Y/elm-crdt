@@ -154,7 +154,7 @@ toString : ResolvedCRDT -> String
 toString (ResolvedCRDT crdt) =
     crdt.operations
         |> List.filter (not << .isTomb)
-        |> List.sortBy (.path >> CRDTPath.sortOrder)
+        |> List.sortBy operationOrder
         |> List.map .char
         |> String.fromList
 
@@ -163,7 +163,7 @@ toCharsWithPath : CRDT -> List ( Char, CRDTPath )
 toCharsWithPath crdt =
     crdt.operations
         |> List.filter (not << .isTomb)
-        |> List.sortBy (.path >> CRDTPath.sortOrder)
+        |> List.sortBy operationOrder
         |> List.map (\operation -> ( operation.char, operation.path ))
 
 
