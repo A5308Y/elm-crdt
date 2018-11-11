@@ -341,14 +341,7 @@ merge leftCrdt rightCrdt =
 
 uniqueFold : Operation -> List Operation -> List Operation
 uniqueFold operation acc =
-    if operation.isTomb then
-        if List.member (operationToComparable operation) (List.map operationToComparable acc) then
-            acc
-
-        else
-            operation :: acc
-
-    else if
+    if
         List.member (operationToComparable operation) (List.map operationToComparable acc)
             || List.member (operationToComparable { operation | isTomb = True }) (List.map operationToComparable acc)
     then
