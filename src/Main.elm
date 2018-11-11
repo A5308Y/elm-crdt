@@ -242,7 +242,7 @@ update msg model =
 
 getFromBin : Http.Request CRDT
 getFromBin =
-    Http.get ("https://api.myjson.com/bins/" ++ binId) CRDT.decoder
+    Http.get (baseBinUri ++ "/" ++ binId) CRDT.decoder
 
 
 binId : String
@@ -265,7 +265,7 @@ putToBin jsonValue =
     Http.request
         { method = "PUT"
         , headers = []
-        , url = "https://api.myjson.com/bins/" ++ binId
+        , url = baseBinUri ++ "/" ++ binId
         , body = Http.jsonBody jsonValue
         , expect = Http.expectJson CRDT.decoder
         , timeout = Nothing
