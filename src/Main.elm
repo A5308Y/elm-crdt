@@ -58,23 +58,21 @@ view model =
 
         Ok resolvedCRDT ->
             div []
-                [ control model resolvedCRDT
-                , case model.impersonatedUser of
+                [ case model.impersonatedUser of
                     Nothing ->
                         div []
-                            [ crdtInput (UserId.fromString "bob") resolvedCRDT
-                            , crdtInput (UserId.fromString "alice") resolvedCRDT
+                            [ button [ onClick (Impersonate (UserId.fromString "alice")) ] [ text "Impersonate Alice" ]
+                            , button [ onClick (Impersonate (UserId.fromString "bob")) ] [ text "Impersonate Bob" ]
                             ]
 
                     Just userId ->
-                        crdtInput userId resolvedCRDT
-                , debugOutput model
-                , button [ onClick CreateNew ] [ text "Create New Empty CRDT" ]
-                , button [ onClick TriggerSynchronize ] [ text "Synchronize" ]
-                , div []
-                    [ button [ onClick (Impersonate (UserId.fromString "alice")) ] [ text "Impersonate Alice" ]
-                    , button [ onClick (Impersonate (UserId.fromString "bob")) ] [ text "Impersonate Bob" ]
-                    ]
+                        div []
+                            [ control model resolvedCRDT
+                            , crdtInput userId resolvedCRDT
+                            , debugOutput model
+                            , button [ onClick CreateNew ] [ text "Create New Empty CRDT" ]
+                            , button [ onClick TriggerSynchronize ] [ text "Synchronize" ]
+                            ]
                 ]
 
 
