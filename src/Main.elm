@@ -199,7 +199,7 @@ update msg model =
                 Ok foreignCrdt ->
                     let
                         updatedCRDT =
-                            CRDT.merge model.crdt foreignCrdt
+                            CRDT.merge foreignCrdt model.crdt
 
                         updatedControl =
                             case CRDT.resolve updatedCRDT of
@@ -225,7 +225,7 @@ update msg model =
                 Ok foreignCrdt ->
                     let
                         updatedCRDT =
-                            CRDT.merge model.crdt foreignCrdt
+                            CRDT.merge foreignCrdt model.crdt
 
                         updatedControl =
                             case CRDT.resolve updatedCRDT of
