@@ -470,6 +470,42 @@ suite =
                     in
                     Expect.equal calculatedResult expectedResult
             ]
+        , describe "resolveWithVersionOf" <|
+            [ test "it does not delete matching characters" <|
+                \_ ->
+                    let
+                        crdtAlice =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = alice, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = alice, path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                ]
+                            }
+
+                        crdtBob =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = bob, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = bob, path = CRDTPath.demoPath [ 7 ], char = 'a', isTomb = False }
+                                ]
+                            }
+
+                        calculatedResult =
+                            CRDT.merge crdtAlice crdtBob
+                                |> CRDT.resolveWithVersionOf alice
+
+                        expectedResult =
+                            { seed = Random.initialSeed 42
+                            , operations =
+                                [ { userId = alice, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = False }
+                                , { userId = alice, path = CRDTPath.demoPath [ 7 ], char = 'e', isTomb = False }
+                                , { userId = bob, path = CRDTPath.demoPath [ 1 ], char = 'H', isTomb = True }
+                                , { userId = bob, path = CRDTPath.demoPath [ 7 ], char = 'a', isTomb = True }
+                                ]
+                            }
+                    in
+                    Expect.equal calculatedResult expectedResult
+            ]
         , describe "merge"
             [ test "prioritizes operations with tombs" <|
                 \_ ->
